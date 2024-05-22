@@ -1,25 +1,35 @@
-import logo from './logo.svg';
+import React, { useState } from 'react';
+import Navbar from './components/Navbar';
+import UnitInformation from './components/UnitInformation';
+import Results from './components/Results';
 import './App.css';
 
-function App() {
+const App = () => {
+  const [step, setStep] = useState(1);
+
+  const nextStep = () => setStep(step + 1);
+  const prevStep = () => setStep(step - 1);
+
+  const renderStep = () => {
+    switch (step) {
+      case 1:
+        return <UnitInformation nextStep={nextStep} />;
+      case 2:
+        return <Results prevStep={prevStep} />;
+      default:
+        return <UnitInformation nextStep={nextStep} />;
+    }
+  };
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100">
+      <h1 className="text-2xl font-bold my-6">3D Pallet Calculator and Configurator</h1>
+      <Navbar step={step} />
+      <div className="w-full flex-1 bg-white p-4 rounded shadow-md flex flex-col items-center justify-center">
+        {renderStep()}
+      </div>
     </div>
   );
-}
+};
 
 export default App;
