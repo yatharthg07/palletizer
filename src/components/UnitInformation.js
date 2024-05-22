@@ -35,7 +35,7 @@ const UnitInformation = ({ nextStep }) => {
 
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div>
-                        <label className="block text-lg font-semibold mb-1 text-gray-800">Unit Dimensions</label>
+                        <label className="block text-lg font-semibold mb-1 text-gray-800">Unit Dimensions (in Cm)</label>
                         <div className="flex space-x-2">
                             <div className="flex flex-col">
                                 <label className="text-sm mb-1 text-gray-600">Width</label>
@@ -74,7 +74,7 @@ const UnitInformation = ({ nextStep }) => {
                     </div>
 
                     <div>
-                        <label className="block text-lg font-semibold mb-1 text-gray-800">Unit Weight</label>
+                        <label className="block text-lg font-semibold mb-1 text-gray-800">Unit Weight (in Kg)</label>
                         <input
                             type="number"
                             name="weight"
@@ -86,10 +86,10 @@ const UnitInformation = ({ nextStep }) => {
                     </div>
 
                     <div>
-                        <label className="block text-lg font-semibold mb-1 text-gray-800">Pallet Dimensions</label>
+                        <label className="block text-lg font-semibold mb-1 text-gray-800">Pallet Dimensions (in Cm)</label>
                         <div className="flex space-x-2">
                             <div className="flex flex-col">
-                                <label className="text-sm mb-1 text-gray-600">Pallet Height</label>
+                                <label className="text-sm mb-1 text-gray-600">Pallet Width</label>
                                 <input
                                     type="number"
                                     name="palletHeight"
@@ -100,7 +100,7 @@ const UnitInformation = ({ nextStep }) => {
                                 />
                             </div>
                             <div className="flex flex-col">
-                                <label className="text-sm mb-1 text-gray-600">Pallet Width</label>
+                                <label className="text-sm mb-1 text-gray-600">Pallet Length</label>
                                 <input
                                     type="number"
                                     name="palletWidth"
