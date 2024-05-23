@@ -10,7 +10,7 @@ const UnitInformation = ({ nextStep }) => {
         weight: '',
         palletHeight: '',
         palletWidth: '',
-        clearance: '',
+        clearance: '0',
         clearanceEnabled: false,
     });
 
