@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import axios from 'axios';
+
 
 const UnitInformation = ({ nextStep }) => {
     const [unitData, setUnitData] = useState({
@@ -20,20 +22,35 @@ const UnitInformation = ({ nextStep }) => {
             setUnitData({ ...unitData, [name]: value });
         }
     };
-
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        console.log(unitData);
-        nextStep();
+
+        try {
+            const response = await axios.post('http://localhost:5000/', unitData, {
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            });
+
+            if (response.status === 200) {
+                console.log(response.data);
+                nextStep();
+            } else {
+                console.error('Failed to send data');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+        }
     };
 
+
     return (
-        <div className="flex justify-between p-4 bg-gray-100 rounded-lg shadow-lg w-3/4 m-auto">
-            <div className="w-1/2 p-2">
+        <div className="flex justify-between p-4 bg-gray-100 rounded-lg shadow-lg w-3/4 m-auto flex-wrap">
+            <div className="w-1/2 p-2 flex flex-col">
                 <h2 className="text-xl font-bold text-blue-600 mb-2">Unit Information</h2>
                 <p className="mb-4 text-gray-700">Enter the width, length, height, and weight of each unit below.</p>
 
-                <form onSubmit={handleSubmit} className="space-y-4">
+                <form onSubmit={handleSubmit} className="flex flex-col flex-wrap space-y-4">
                     <div>
                         <label className="block text-lg font-semibold mb-1 text-gray-800">Unit Dimensions</label>
                         <div className="flex space-x-2">
@@ -141,7 +158,7 @@ const UnitInformation = ({ nextStep }) => {
                 </form>
             </div>
 
-            <div className="w-1/2 flex items-center justify-center">
+            <div className="w-1/2 flex items-center justify-center p-2">
                 <img src={`${process.env.PUBLIC_URL}/box.png`} alt="box" className="max-w-full h-auto rounded shadow-lg" />
             </div>
         </div>

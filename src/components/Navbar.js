@@ -13,7 +13,7 @@ const Navbar = ({ step }) => {
           <li
             key={index}
             className={`flex-1 text-center py-2 cursor-pointer ${
-              step === index + 1 ? 'bg-blue-500 text-white' : 'bg-gray-200 text-black'
+              step === index + 1 ? 'bg-blue-500 text-white' : 'bg-gray-300 text-black'
             }`}
           >
             {label}
