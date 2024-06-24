@@ -4,15 +4,22 @@ import UnitInformation from './components/UnitInformation';
 import Results from './components/Results';
 import DragAndDropPallet from './components/ManualPalletConfigurator'; // Assuming this is the drag-and-drop component
 import './App.css';
+// App.js
+// App.js
+import Results2 from './components/Results2'; // Import the new component
 
 const App = () => {
   const [step, setStep] = useState(1);
   const [mode, setMode] = useState('auto'); // 'auto' or 'manual'
+  const [coordinates, setCoordinates] = useState([]); // State to hold coordinates from manual mode
 
+  const handleManualSubmit = (data) => {
+    setCoordinates(data); // Set the coordinate data
+    setStep(4); // Assuming step 3 is for Results2
+  };
   const nextStep = () => setStep(step + 1);
   const prevStep = () => setStep(step - 1);
   const toggleMode = () => setMode(mode === 'auto' ? 'manual' : 'auto');
-
   const renderStep = () => {
     if (mode === 'auto') {
       switch (step) {
@@ -24,9 +31,15 @@ const App = () => {
           return <UnitInformation nextStep={nextStep} />;
       }
     } else if (mode === 'manual') {
-      return <DragAndDropPallet />;
+      if (step === 4) {
+        return <Results2 coordinates={coordinates} prevStep={prevStep} />;
+      }
+      return <DragAndDropPallet onSubmit={handleManualSubmit} />;
     }
   };
+
+  
+
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100">

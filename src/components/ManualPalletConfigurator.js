@@ -3,7 +3,7 @@ import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import BoxGrid from './BoxGrid';
 import "./draganddrop.css"
-function App() {
+function App({onSubmit}) {
   const [boxes, setBoxes] = useState([]);
   const [gridWidth, setGridWidth] = useState("5");
   const [gridHeight, setGridHeight] = useState("5");
@@ -152,17 +152,27 @@ function App() {
   
 
   const submitBoxes = () => {
-    console.log("Coordinates of Box Centers:");
-    boxes.forEach(box => {
-        for (let layer = 1; layer <= numLayers; layer++) {
-            const z = box.height * (layer - 0.5);  // Calculate center Z for each layer
-            // Convert pixel to meters by dividing by scale factor and adding half of the dimension
-            const xCenter = ((box.x + (box.width * scaleFactorWidth / 2)) / scaleFactorWidth).toFixed(2);
-            const yCenter = ((box.y + (box.length * scaleFactorLength / 2)) / scaleFactorLength).toFixed(2);
-            console.log(`Box ${box.id} on Layer ${layer}: (${xCenter}, ${yCenter}, ${z.toFixed(2)}) meters`);
-        }
-    });
+    const coordinates = boxes.map(box => {
+      const results = [];
+      for (let layer = 1; layer <= numLayers; layer++) {
+        const z = box.height * (layer - 0.5);  // Calculate center Z for each layer
+        // Convert pixel to meters by dividing by scale factor and adding half of the dimension
+        const xCenter = ((box.x + (box.width * scaleFactorWidth / 2)) / scaleFactorWidth).toFixed(2);
+        const yCenter = ((box.y + (box.length * scaleFactorLength / 2)) / scaleFactorLength).toFixed(2);
+        results.push({
+          id: box.id,
+          layer: layer,
+          x: xCenter,
+          y: yCenter,
+          z: z.toFixed(2)
+        });
+      }
+      return results;
+    }).flat(); // Flatten the array if multiple layers produce multiple entries per box
+    
+    onSubmit(coordinates);  // Assuming onSubmit is passed via props
   };
+  
   
 
 
@@ -212,7 +222,7 @@ function App() {
               <label className="text-lg font-semibold text-gray-800">Number of Layers</label>
               <input type="number" value={numLayers} onChange={(e) => setNumLayers(e.target.value)} className="input w-20 px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"/>
             </div>
-            <div className="">
+            <div className="flex justify-between mt-5">
               <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" onClick={addBox}>Add Box</button>
               <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded ml-4" onClick={submitBoxes}>Submit Boxes</button>
             </div>
