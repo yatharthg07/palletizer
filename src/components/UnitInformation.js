@@ -45,7 +45,7 @@ const UnitInformation = ({ nextStep }) => {
 
 
     return (
-        <div className="flex justify-between p-4 bg-gray-100 rounded-lg shadow-lg w-3/4 m-auto flex-wrap">
+        <div className="flex flex-1 justify-between px-4 pt-2 bg-gray-100 rounded-lg shadow-lg w-3/4 m-auto flex-wrap">
             <div className="w-1/2 p-2 flex flex-col">
                 <h2 className="text-xl font-bold text-blue-600 mb-2">Unit Information</h2>
                 <p className="mb-4 text-gray-700">Enter the width, length, height, and weight of each unit below.</p>
