@@ -13,9 +13,12 @@ const App = () => {
   const [mode, setMode] = useState('auto'); // 'auto' or 'manual'
   const [coordinates, setCoordinates] = useState([]); // State to hold coordinates from manual mode
 
+  const [palletDimensions, setPalletDimensions] = useState({ width: 0, height: 0 });
+
   const handleManualSubmit = (data) => {
-    setCoordinates(data); // Set the coordinate data
-    setStep(4); // Assuming step 3 is for Results2
+    setCoordinates(data.coordinates);
+    setPalletDimensions({ width: data.gridWidth, height: data.gridHeight });
+    setStep(4);
   };
   const nextStep = () => setStep(step + 1);
   const prevStep = () => setStep(step - 1);
@@ -32,7 +35,7 @@ const App = () => {
       }
     } else if (mode === 'manual') {
       if (step === 4) {
-        return <Results2 coordinates={coordinates} prevStep={prevStep} />;
+        return <Results2 coordinates={coordinates} palletDimensions={palletDimensions} prevStep={prevStep} />;
       }
       return <DragAndDropPallet onSubmit={handleManualSubmit} />;
     }

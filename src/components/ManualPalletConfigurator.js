@@ -156,21 +156,28 @@ function App({onSubmit}) {
       const results = [];
       for (let layer = 1; layer <= numLayers; layer++) {
         const z = box.height * (layer - 0.5);  // Calculate center Z for each layer
-        // Convert pixel to meters by dividing by scale factor and adding half of the dimension
         const xCenter = ((box.x + (box.width * scaleFactorWidth / 2)) / scaleFactorWidth).toFixed(2);
         const yCenter = ((box.y + (box.length * scaleFactorLength / 2)) / scaleFactorLength).toFixed(2);
         results.push({
           id: box.id,
           layer: layer,
-          x: xCenter,
-          y: yCenter,
-          z: z.toFixed(2)
+          x: parseFloat(xCenter),
+          y: parseFloat(yCenter),
+          z: parseFloat(z),
+          width: box.width,
+          height: box.height,
+          length: box.length
         });
       }
       return results;
     }).flat(); // Flatten the array if multiple layers produce multiple entries per box
     
-    onSubmit(coordinates);  // Assuming onSubmit is passed via props
+    // Call the onSubmit function passed via props with the necessary data
+    onSubmit({
+      coordinates: coordinates,
+      gridWidth: parseFloat(gridWidth),
+      gridHeight: parseFloat(gridHeight)
+    });
   };
   
   
