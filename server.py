@@ -31,15 +31,18 @@ def unit_information():
 def receive_coordinates():
     data = request.json
     try:
-        # Convert data to JSON string and pass to the subprocess
-        process = subprocess.Popen(['python3', 'palletbackendfinal.py'], stdin=subprocess.PIPE, text=True)
-        process.communicate(json.dumps(data))
+        # Serialize data to a JSON string
+        data_str = json.dumps(data)
+
+        # Start the subprocess with data passed as a command-line argument
+        process = subprocess.Popen(['python3', 'palletbackendfinal.py', data_str], stdin=None, stdout=None, stderr=None, text=True) # Wait for the subprocess to complete if necessary
+
         if process.returncode == 0:
             return jsonify({"status": "success"}), 200
         else:
             return jsonify({"status": "error", "message": "Subprocess failed"}), 500
     except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 500 
+        return jsonify({"status": "error", "message": str(e)}), 500
 
 if __name__ == '__main__':
     app.run(debug=True)

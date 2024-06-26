@@ -156,8 +156,8 @@ function App({onSubmit}) {
       const results = [];
       for (let layer = 1; layer <= numLayers; layer++) {
         const z = box.height * (layer - 0.5);  // Calculate center Z for each layer
-        const xCenter = ((box.x + (box.width * scaleFactorWidth / 2)) / scaleFactorWidth).toFixed(2);
-        const yCenter = ((box.y + (box.length * scaleFactorLength / 2)) / scaleFactorLength).toFixed(2);
+        const xCenter = ((box.x + (box.width * scaleFactorWidth / 2)) / scaleFactorWidth).toFixed(3);
+        const yCenter = ((box.y + (box.length * scaleFactorLength / 2)) / scaleFactorLength).toFixed(3);
         results.push({
           id: box.id,
           layer: layer,
