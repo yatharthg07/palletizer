@@ -16,7 +16,6 @@ const App = () => {
   const [palletDimensions, setPalletDimensions] = useState({ width: 0, height: 0 });
 
   const handleManualSubmit = (data) => {
-    console.log(data);
     setCoordinates(data.coordinates);
     setPalletDimensions({ width: data.gridWidth, height: data.gridHeight });
     setStep(4);

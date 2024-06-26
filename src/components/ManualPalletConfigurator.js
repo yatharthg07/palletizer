@@ -166,8 +166,7 @@ function App({onSubmit}) {
           z: parseFloat(z),
           width: box.width,
           height: box.height,
-          length: box.length,
-          totalLayers: numLayers,
+          length: box.length
         });
       }
       return results;

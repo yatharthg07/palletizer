@@ -25,21 +25,6 @@ def unit_information():
         return jsonify({"message": "Data received", "output": output}), 200
     except Exception as e:
         return jsonify({"message": "Error processing data", "error": str(e)}), 500
-    
-    
-@app.route('/send-coordinates', methods=['POST'])
-def receive_coordinates():
-    data = request.json
-    try:
-        # Convert data to JSON string and pass to the subprocess
-        process = subprocess.Popen(['python3', 'palletbackendfinal.py'], stdin=subprocess.PIPE, text=True)
-        process.communicate(json.dumps(data))
-        if process.returncode == 0:
-            return jsonify({"status": "success"}), 200
-        else:
-            return jsonify({"status": "error", "message": "Subprocess failed"}), 500
-    except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 500 
 
 if __name__ == '__main__':
     app.run(debug=True)

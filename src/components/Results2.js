@@ -17,7 +17,7 @@ const PalletVisualization = ({ pallet, boxes }) => {
   const layerScale = maxLayerHeight / Math.max(...boxes.map(box => box.z)); // Scaling for side view
   
   const svgWidth = maxWidth;
-  const svgHeight = maxHeight + margin * 3; // Extra space for side view and labels
+  const svgHeight = maxHeight + maxLayerHeight + margin * 3; // Extra space for side view and labels
 
   return (
     <svg width={svgWidth} height={svgHeight}>
@@ -62,23 +62,6 @@ const PalletVisualization = ({ pallet, boxes }) => {
 };
 
 const Results2 = ({ coordinates, palletDimensions, prevStep }) => {
-    const sendCoordinatesToRobot = async () => {
-        try {
-          const response = await fetch('http://localhost:5000/send-coordinates', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ coordinates })
-          });
-          const data = await response.json();
-          console.log('Server response:', data);
-          alert('Coordinates sent successfully!');
-        } catch (error) {
-          console.error('Failed to send coordinates:', error);
-          alert('Failed to send coordinates.');
-        }
-      };
   if (!coordinates || coordinates.length === 0) {
     return (
       <div className="flex flex-col justify-center items-center p-4 bg-gray-100 rounded-lg shadow-lg">
@@ -109,13 +92,6 @@ const Results2 = ({ coordinates, palletDimensions, prevStep }) => {
         className="px-3 py-1 bg-gray-300 text-gray-800 rounded hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 mt-4"
       >
         Previous Step
-      </button>
-      <button
-        type="button"
-        onClick={sendCoordinatesToRobot}
-        className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
-      >
-        Send to Robot
       </button>
     </div>
   );
