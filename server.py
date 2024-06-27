@@ -25,8 +25,6 @@ def unit_information():
         return jsonify({"message": "Data received", "output": output}), 200
     except Exception as e:
         return jsonify({"message": "Error processing data", "error": str(e)}), 500
-<<<<<<< HEAD
-=======
     
     
 @app.route('/send-coordinates', methods=['POST'])
@@ -45,7 +43,6 @@ def receive_coordinates():
             return jsonify({"status": "error", "message": "Subprocess failed"}), 500
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
->>>>>>> ca851713aa1bccb578844e295580e1b3271cd338
 
 if __name__ == '__main__':
     app.run(debug=True)
