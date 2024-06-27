@@ -1,65 +1,5 @@
-import React from 'react';
-
-// Function to calculate the scale factor based on max dimensions to fit in a fixed SVG area
-const calculateScale = (width, height, maxWidth, maxHeight) => {
-  const scaleX = maxWidth / width;
-  const scaleY = maxHeight / height;
-  return Math.min(scaleX, scaleY);
-};
-
-const PalletVisualization = ({ pallet, boxes }) => {
-  const maxWidth = 800; // Maximum width for top view
-  const maxHeight = 400; // Maximum height for top view
-  const maxLayerHeight = 200; // Maximum height for side view
-  const margin = 20;
-  
-  const scale = calculateScale(pallet.width, pallet.height, maxWidth - margin * 2, maxHeight - margin * 2);
-  const layerScale = maxLayerHeight / Math.max(...boxes.map(box => box.z)); // Scaling for side view
-  
-  const svgWidth = maxWidth;
-  const svgHeight = maxHeight + maxLayerHeight + margin * 3; // Extra space for side view and labels
-
-  return (
-    <svg width={svgWidth} height={svgHeight}>
-      {/* Top View */}
-      <text x={margin} y={margin - 5}>Top View</text>
-      <rect x={margin} y={margin} width={pallet.width * scale} height={pallet.height * scale} fill="#f4deb3" stroke="#886a49" />
-      {boxes.map((box, index) => (
-        <rect
-          key={`top-${index}`}
-          x={margin + (box.x - box.width / 2) * scale}
-          y={margin + (box.y - box.length / 2) * scale}
-          width={box.width * scale}
-          height={box.length * scale}
-          fill="#d9cbb3"
-          stroke="#7a5b34"
-        />
-      ))}
-
-      {/* Side View */}
-      {/* <text x={margin} y={maxHeight + margin * 2 - 5}>Side View</text>
-      <rect 
-        x={margin} 
-        y={maxHeight + margin * 2} 
-        width={pallet.width * scale} 
-        height={maxLayerHeight} 
-        fill="#f4deb3" 
-        stroke="#886a49" 
-      />
-      {boxes.map((box, index) => (
-        <rect
-          key={`side-${index}`}
-          x={margin + (box.x - box.width / 2) * scale}
-          y={maxHeight + margin * 2 + (Math.max(...boxes.map(b => b.z)) - box.z) * layerScale}
-          width={box.width * scale}
-          height={box.height * layerScale}
-          fill="#d9cbb3"
-          stroke="#7a5b34"
-        />
-      ))} */}
-    </svg>
-  );
-};
+import React from "react";
+import Visual from "./VIsual";
 
 const Results2 = ({ coordinates, palletDimensions, prevStep }) => {
   if (!coordinates || coordinates.length === 0) {
@@ -85,7 +25,7 @@ const Results2 = ({ coordinates, palletDimensions, prevStep }) => {
           <p key={index} className="text-gray-700">{`Box ${coord.id} on Layer ${coord.layer}: (${coord.x}, ${coord.y}, ${coord.z}) meters`}</p>
         ))}
       </div>
-      <PalletVisualization pallet={palletDimensions} boxes={coordinates} />
+      <Visual palletDimensions={palletDimensions} coordinates={coordinates} />
       <button
         type="button"
         onClick={prevStep}

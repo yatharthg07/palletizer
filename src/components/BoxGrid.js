@@ -15,7 +15,7 @@ const BoxGrid = ({ boxes, moveBox, rotateBox, removeBox, gridWidth, gridHeight, 
 if (gridWidth <= 0 || gridHeight <= 0) {
   return (
     <div className="grid" style={{ width: `${gridWidth}px`, height: `${gridHeight}px` }}>
-      <p>Invalid grid dimensions</p>
+      <p></p>
     </div>
   );
 }

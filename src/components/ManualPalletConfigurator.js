@@ -15,6 +15,7 @@ function App({onSubmit}) {
   const [scaleFactorLength, setScaleFactorLength] = useState(100);
   const [displayWidth, setDisplayWidth] = useState(500);
   const [displayHeight, setDisplayHeight] = useState(500);
+  const [nextId, setNextId] = useState(0);
 
   useEffect(() => {
     const widthNum = Number(gridWidth);
@@ -52,7 +53,7 @@ function App({onSubmit}) {
 
   const addBox = () => {
     const newBox = {
-      id: boxes.length,
+      id: nextId,
       x: 10,
       y: 10,
       width: Number(boxWidth),
@@ -60,7 +61,8 @@ function App({onSubmit}) {
       height: Number(boxHeight),
       layer: 1  // Default to layer 1
     };
-    setBoxes([...boxes, newBox]);
+    setBoxes([...boxes, newBox]); 
+    setNextId(nextId + 1);
   };
 
   
@@ -178,6 +180,7 @@ function App({onSubmit}) {
       gridWidth: parseFloat(gridWidth),
       gridHeight: parseFloat(gridHeight)
     });
+    console.log(boxes)
   };
   
   
