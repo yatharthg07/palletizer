@@ -87,12 +87,18 @@ const Results2 = ({ coordinates, palletDimensions, prevStep }) => {
       </div>
       <PalletVisualization pallet={palletDimensions} boxes={coordinates} />
       <button
-        type="button"
-        onClick={prevStep}
-        className="px-3 py-1 bg-gray-300 text-gray-800 rounded hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 mt-4"
-      >
-        Previous Step
-      </button>
+    className="px-3 py-1 bg-blue-500 text-white font-bold rounded hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+  >
+    Save Configuration
+  </button>
+      <button
+    type="button"
+    onClick={prevStep}
+    className="px-3 py-1 bg-gray-300 text-gray-800 font-bold rounded hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 mt-4"
+  >
+    Previous Step
+  </button>
+  
     </div>
   );
 };
