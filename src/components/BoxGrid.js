@@ -10,6 +10,15 @@ const BoxGrid = ({ boxes, moveBox, rotateBox, removeBox, gridWidth, gridHeight, 
   // Calculate scale factors based on grid dimensions
   const scaleX = gridWidth / 492;  // Assuming original SVG width was 492
   const scaleY = gridHeight / 492;  // Assuming original SVG height was 492
+  
+  //Validate gridWidth and gridHeight
+if (gridWidth <= 0 || gridHeight <= 0) {
+  return (
+    <div className="grid" style={{ width: `${gridWidth}px`, height: `${gridHeight}px` }}>
+      <p>Invalid grid dimensions</p>
+    </div>
+  );
+}
 
   // Calculate dynamic dimensions and positions
   const calculateSize = (size) => Math.round(size * Math.min(scaleX, scaleY));
@@ -53,3 +62,4 @@ const BoxGrid = ({ boxes, moveBox, rotateBox, removeBox, gridWidth, gridHeight, 
 };
 
 export default BoxGrid;
+

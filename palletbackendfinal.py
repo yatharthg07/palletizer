@@ -127,7 +127,7 @@ def handle_coordinates(coordinates):
 
     for coord in coordinates:
         if coord['layer'] == 1:  # Check if the box is on layer 1
-            box_coords_layer_1.append([coord['x'], coord['y'], 0])
+            box_coords_layer_1.append([coord['y'], coord['x'], 0])
         
         # Since all boxes have the same height and total layers, we only set this once
         if height is None or num_layers is None:
@@ -173,9 +173,9 @@ def getMasterPoint():
     pickup = get_tcp_pose(robot_ip)
     print(pickup)
 
-    num_layers = int(input("Enter the number of layers: "))
+    # num_layers = int(input("Enter the number of layers: "))
 
-    return pickup, transfer, result, num_layers
+    return pickup, transfer, result
 
 
 def calculate_pre_point(point):
@@ -188,13 +188,15 @@ def apply_rotation(position, angle_rad):
 
 
 if __name__ == "__main__":
-    pickup_point, transfer_point, master_point, num_layers = getMasterPoint()
-    input_str = sys.stdin.read()
-    data = json.loads(input_str)
+    if len(sys.argv) > 1:
+        data = json.loads(sys.argv[1])
+        print("Received data:", data)
     box_coords, height, num_layers= handle_coordinates(data['coordinates'])
     print("Coordinates of boxes on Layer 1:", box_coords)
     print("Height of each box:", height)
     print("Total number of layers:", num_layers)
+    pickup_point, transfer_point, master_point= getMasterPoint()
+
     # box_coords now includes rotation angle as the third element (in radians)
     # box_coords = [
     #     [0.1, 0.1, math.pi / 2],  # 90 degrees
