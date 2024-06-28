@@ -65,7 +65,8 @@ const Results2 = ({ coordinates, palletDimensions, prevStep }) => {
   };
 
   return (
-    <Flex h="100vh" w="90%" bg="gray.100" p={4}>
+    <Flex h="100vh" w="90%" bg="gray.100" p={5}           rounded="lg"
+    shadow="lg">
       <VStack w="60%" spacing={4} align="stretch">
         <Box bg="white" rounded="lg" shadow="md" p={5}>
           <Text fontSize="2xl" fontWeight="bold" color="blue.600" mb={2}>Pallet Coordinates</Text>

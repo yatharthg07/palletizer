@@ -45,17 +45,17 @@ def get_master_point():
     
     socketio.emit('prompt', {'message': 'Press done after reaching desired master location and switch robot to Remote mode'})
     wait_for_user_input()
-    result = print(robot_ip)
+    result = robot_ip
     socketio.emit('info', {'message': f'Master point: {result}'})
     
     socketio.emit('prompt', {'message': 'Press done after reaching desired transfer location'})
     wait_for_user_input()
-    transfer = print(robot_ip)
+    transfer = robot_ip
     socketio.emit('info', {'message': f'Transfer point: {transfer}'})
     
     socketio.emit('prompt', {'message': 'Press done after reaching desired pickup location'})
     wait_for_user_input()
-    pickup = print(robot_ip)
+    pickup = robot_ip
     socketio.emit('info', {'message': f'Pickup point: {pickup}'})
     
     return pickup, transfer, result

@@ -22,7 +22,7 @@ const Visual = ({ coordinates, palletDimensions }) => {
         const controls = new OrbitControls(camera, renderer.domElement);
 
         // Lighting
-        const ambientLight = new THREE.AmbientLight(0x404040); // soft white light
+        const ambientLight = new THREE.AmbientLight(0xffffff); // soft white light
         scene.add(ambientLight);
         const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
         directionalLight.position.set(1, 1, 1);
