@@ -1,25 +1,16 @@
 
-  // // theme.js
-  // import { extendTheme } from "@chakra-ui/react";
+// theme.js
 
-  // const theme = extendTheme({
-  //   colors: {
-  //     brand: {
-  //       500: "#2a69ac",
-  //       600: "#1e4e8c",
-  //     },
-  //   },
-  //   fonts: {
-  //     heading: 'Poppins, sans-serif',
-  //     body: 'Roboto, sans-serif',
-  //   },
-  //   components: {
-  //     Button: {
-  //       baseStyle: {
-  //         fontWeight: 'bold',
-  //       },
-  //     },
-  //   },
-  // });
+// 1. import `extendTheme` function
+import { extendTheme } from '@chakra-ui/react'
 
-  // export default theme;
+// 2. Add your color mode config
+const config = {
+  initialColorMode: 'dark',
+  useSystemColorMode: false,
+}
+
+// 3. extend the theme
+const theme = extendTheme({ config })
+
+export default theme

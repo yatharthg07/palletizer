@@ -7,7 +7,36 @@ from flask_socketio import SocketIO, emit
 from flask_cors import CORS
 from threading import Event
 
+app = Flask(__name__)
+CORS(app)
+socketio = SocketIO(app, cors_allowed_origins="*")
+box_coords = []
+pickup_point = None
+transfer_point = None
+master_point = None
+num_layers = None
+
+user_input_event = Event()
+
 DEFAULT_TIMEOUT = 10
+
+@app.route('/send-coordinates', methods=['POST'])
+def receive_coordinates():
+    global box_coords, num_layers
+    data = request.json
+    coordinates = data['coordinates']
+    
+    # Filter coordinates for layer 1 and extract x, y, z
+    box_coords = [[coord['x'], coord['y'], coord['z']] for coord in coordinates if coord['layer'] == 1]
+    
+    # Get total layers
+    num_layers = coordinates[0]['totalLayers']
+    
+    return jsonify({'message': 'Coordinates received successfully'})
+
+def wait_for_user_input():
+    user_input_event.clear()
+    user_input_event.wait()
 
 conname = ['total_message_len', 'total_message_type', 'mode_sub_len', 'mode_sub_type', 'timestamp', 'reserver',
            'reserver', 'is_robot_power_on', 'is_emergency_stopped', 'is_robot_protective_stopped', 'is_program_running',
@@ -125,6 +154,7 @@ def get_tcp_pose(robot_ip):
         rb.connect(robot_ip)
     except Exception as e:
         print(f"Failed to connect to robot: {e}")
+        socketio.emit('error', {'message': f'Failed to connect to robot: {e}'})
         exit(1)
 
     data = rb.get_data()
@@ -139,23 +169,26 @@ def get_tcp_pose(robot_ip):
     return tcp_position
 
 
-def getMasterPoint():
+def get_master_point():
+    global pickup_point, transfer_point, master_point, num_layers
     robot_ip = '192.168.1.200'
-    input("Press enter after reaching desired master location and switch robot to Remote mode")
+    
+    socketio.emit('prompt', {'message': 'Press done after reaching desired master location and switch robot to Remote mode'})
+    wait_for_user_input()
     result = get_tcp_pose(robot_ip)
-    print(result)
-
-    input("Press enter after reaching desired transfer location")
+    socketio.emit('info', {'message': f'Master point: {result}'})
+    
+    socketio.emit('prompt', {'message': 'Press done after reaching desired transfer location'})
+    wait_for_user_input()
     transfer = get_tcp_pose(robot_ip)
-    print(transfer)
-
-    input("Press enter after reaching desired pickup location")
+    socketio.emit('info', {'message': f'Transfer point: {transfer}'})
+    
+    socketio.emit('prompt', {'message': 'Press done after reaching desired pickup location'})
+    wait_for_user_input()
     pickup = get_tcp_pose(robot_ip)
-    print(pickup)
-
-    num_layers = int(input("Enter the number of layers: "))
-
-    return pickup, transfer, result, num_layers
+    socketio.emit('info', {'message': f'Pickup point: {pickup}'})
+    
+    return pickup, transfer, result
 
 
 def calculate_pre_point(point):
@@ -167,16 +200,15 @@ def apply_rotation(position, angle_rad):
     return position
 
 
-if __name__ == "__main__":
-    pickup_point, transfer_point, master_point, num_layers = getMasterPoint()
+@socketio.on('done')
+def handle_done():
+    user_input_event.set()
 
-    # box_coords now includes rotation angle as the third element (in radians)
-    box_coords = [
-        [0.1, 0.1, 0],  # 90 degrees
-        [0.2, 0.1, 0],  # 0 degrees
-        [0.1, 0.2, 0],  # 0 degrees
-        [0.2, 0.2, 0]  # 90 degrees
-    ]
+@app.route('/start-process', methods=['POST'])
+def start_process():
+    global pickup_point, transfer_point, master_point, num_layers, box_coords
+    
+    pickup_point, transfer_point, master_point = get_master_point()
 
     rb = RobotData()
     try:
@@ -215,9 +247,11 @@ if __name__ == "__main__":
             # Adjust height for next layer
             pickup_point[2] += 0
             master_point[2] += 0.1
-
+            
+        socketio.emit('info', {'message': 'Task completed successfully'})
     except (socket.error, socket.timeout) as e:
         print(f"Socket error: {e}")
+        socketio.emit('error', {'message': f'Socket error: {e}'})
     finally:
         rb.disconnect()
 
@@ -225,3 +259,8 @@ if __name__ == "__main__":
     print("Transfer Point:", transfer_point)
     print("Master Point:", master_point)
     print("Number of Layers:", num_layers)
+    return jsonify({'message': 'Process completed'})
+    
+    
+if __name__ == '__main__':
+    socketio.run(app, debug=True)    

@@ -1,8 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect} from 'react';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import BoxGrid from './BoxGrid';
+import SavedConfigurations from './SavedConfigurations';
 import "./draganddrop.css"
+import { ChevronLeftIcon } from '@chakra-ui/icons';
+import html2canvas from 'html2canvas';
 import {
   Box,
   Button,
@@ -14,6 +17,21 @@ import {
   Stack,
   Text,
   useColorModeValue,
+  Modal,
+  ModalOverlay,
+  ModalContent,
+  ModalHeader,
+  ModalFooter,
+  ModalBody,
+  ModalCloseButton,
+  useDisclosure,
+  useToast,
+  Drawer,
+  DrawerBody,
+  DrawerHeader,
+  DrawerOverlay,
+  DrawerContent,
+  DrawerCloseButton,
 } from '@chakra-ui/react';
 
 function App({onSubmit}) {
@@ -29,6 +47,95 @@ function App({onSubmit}) {
   const [displayWidth, setDisplayWidth] = useState(500);
   const [displayHeight, setDisplayHeight] = useState(500);
   const [nextId, setNextId] = useState(0);
+  const [savedConfigurations, setSavedConfigurations] = useState([]);
+  const { 
+    isOpen: isModalOpen, 
+    onOpen: onModalOpen, 
+    onClose: onModalClose 
+  } = useDisclosure();
+  const { 
+    isOpen: isDrawerOpen, 
+    onOpen: onDrawerOpen, 
+    onClose: onDrawerClose 
+  } = useDisclosure();
+  const [configName, setConfigName] = useState('');
+  const toast = useToast();
+  useEffect(() => {
+    const loadedConfigurations = localStorage.getItem('palletConfigurations');
+    if (loadedConfigurations) {
+      setSavedConfigurations(JSON.parse(loadedConfigurations));
+    }
+  }, []);
+
+
+  const saveConfiguration = () => {
+    const newConfig = {
+      name: configName,
+      boxes: boxes,
+      gridWidth,
+      gridHeight,
+      boxWidth,
+      boxLength,
+      boxHeight,
+      numLayers,
+      scaleFactorWidth: scaleFactorWidth,
+      scaleFactorLength: scaleFactorLength,
+      displayHeight: displayHeight,
+      displayWidth: displayWidth,
+      nextId: nextId,
+    };
+    const updatedConfigurations = [...savedConfigurations, newConfig];
+    setSavedConfigurations(updatedConfigurations);
+    localStorage.setItem('palletConfigurations', JSON.stringify(updatedConfigurations));
+    onModalClose();
+    setConfigName('');
+    toast({
+      title: "Configuration saved",
+      description: `${configName} has been saved successfully.`,
+      status: "success",
+      duration: 3000,
+      isClosable: true,
+    });
+  };
+
+  const applyConfiguration = (config) => {
+    setBoxes(config.boxes);
+    setGridWidth(config.gridWidth);
+    setGridHeight(config.gridHeight);
+    setBoxWidth(config.boxWidth);
+    setBoxLength(config.boxLength);
+    setBoxHeight(config.boxHeight);
+    setNumLayers(config.numLayers);
+    setScaleFactorLength(config.scaleFactorLength);
+    setScaleFactorWidth(config.scaleFactorWidth);
+    setDisplayWidth(config.displayWidth);
+    setDisplayHeight(config.displayHeight);
+    setNextId(config.nextId);
+    toast({
+      title: "Configuration applied",
+      description: `${config.name} has been applied successfully.`,
+      status: "info",
+      duration: 3000,
+      isClosable: true,
+    });
+    console.log(config);
+    console.log(nextId);
+  };
+
+  const deleteConfiguration = (configToDelete) => {
+    const updatedConfigurations = savedConfigurations.filter(
+      config => config.name !== configToDelete.name
+    );
+    setSavedConfigurations(updatedConfigurations);
+    localStorage.setItem('palletConfigurations', JSON.stringify(updatedConfigurations));
+    toast({
+      title: "Configuration deleted",
+      description: `${configToDelete.name} has been deleted.`,
+      status: "warning",
+      duration: 3000,
+      isClosable: true,
+    });
+  };
 
   useEffect(() => {
     const widthNum = Number(gridWidth);
@@ -55,14 +162,25 @@ function App({onSubmit}) {
 
   useEffect(() => {
     // Update all boxes with the new dimensions
-    const updatedBoxes = boxes.map(box => ({
-      ...box,
-      width: Number(boxWidth),
-      height: Number(boxHeight),
-      length: Number(boxLength),
-    }));
+    const updatedBoxes = boxes.map(box => {
+      if (box.rotate) {
+        return {
+          ...box,
+          width: Number(boxLength),  // Swap width and length
+          height: Number(boxHeight),
+          length: Number(boxWidth),  // Swap length and width
+        };
+      } else {
+        return {
+          ...box,
+          width: Number(boxWidth),
+          height: Number(boxHeight),
+          length: Number(boxLength),
+        };
+      }
+    });
     setBoxes(updatedBoxes);
-  }, [boxWidth, boxHeight,boxLength]);
+  }, [boxWidth, boxHeight, boxLength]); 
 
   const addBox = () => {
     const newBox = {
@@ -72,7 +190,8 @@ function App({onSubmit}) {
       width: Number(boxWidth),
       length: Number(boxLength),  // Changed to boxLength
       height: Number(boxHeight),
-      layer: 1  // Default to layer 1
+      layer: 1,  // Default to layer 1
+      rotate: false
     };
     setBoxes([...boxes, newBox]); 
     setNextId(nextId + 1);
@@ -210,19 +329,21 @@ function App({onSubmit}) {
 
   return (
     <DndProvider backend={HTML5Backend}>
-        <Box
-          bg={formBg}
-          rounded="lg"
-          shadow="lg"
-          p={8}
-          w={{ base: '100%', lg: '80%' }}
-          display="flex"
-          flexDirection={{ base: 'column', lg: 'row' }}
-          justifyContent="space-between"
-          alignItems="center"
-          h="75vh"
-        >
-          <Stack spacing={4} w={{ base: '100%', lg: '40%' }} mb={{ base: 4, lg: 0 }}>
+      <Box position="relative" display="flex" justifyContent="center" w="100%" h="80%">
+        <Flex direction="row" w="80%" h="80%">
+          <Box
+            bg={useColorModeValue('white', 'gray.200')}
+            rounded="lg"
+            shadow="lg"
+            p={8}
+            w="100%"
+            display="flex"
+            flexDirection={{ base: 'column', lg: 'row' }}
+            justifyContent="space-between"
+            alignItems="center"
+            h="100%"
+          >
+          <Stack spacing={4} w={{ base: '100%', lg: '40%' }} mb={{ base: 'auto', lg: 'auto' }}>
             <Heading as="h2" size="lg" color="blue.600">
               Manual Pallet Configuration
             </Heading>
@@ -306,14 +427,21 @@ function App({onSubmit}) {
                 borderColor={inputBorder}
               />
             </FormControl>
-            <Flex justify="space-between" mt={4}>
-              <Button colorScheme="blue" onClick={addBox}>
-                Add Box
-              </Button>
-              <Button colorScheme="blue" onClick={submitBoxes}>
-                Submit Boxes
-              </Button>
-            </Flex>
+            <Flex justify="space-between"  mt={4}>
+            <Button colorScheme="blue" onClick={addBox}>
+              Add Box
+            </Button>
+            <Button colorScheme="green" onClick={onModalOpen}>
+              Save Configuration
+            </Button>
+            <Button colorScheme="green" onClick={submitBoxes}>
+              Submit Boxes
+            </Button>
+
+            {/* <Button colorScheme="teal" onClick={onDrawerOpen}>
+              Saved Configurations
+            </Button> */}
+          </Flex>
           </Stack>
           <Box
             flex="1"
@@ -335,6 +463,72 @@ function App({onSubmit}) {
             />
           </Box>
         </Box>
+        {/* <Box w="30%" ml={4}>
+         <SavedConfigurations
+          configurations={savedConfigurations}
+          applyConfiguration={applyConfiguration}
+          deleteConfiguration={deleteConfiguration}
+        />
+        </Box> */}
+      </Flex>
+      <Button
+          position="fixed"
+          right="0"
+          top="50%"
+          transform="translateY(-50%)"
+          colorScheme="teal"
+          onClick={onDrawerOpen}
+          zIndex="1000"
+          h="100px"
+          w="40px"
+          borderRightRadius="0"
+          borderLeftRadius="md"
+        > 
+          <ChevronLeftIcon boxSize={6} />
+        </Button>
+      <Modal isOpen={isModalOpen} onClose={onModalClose}>
+        <ModalOverlay />
+        <ModalContent>
+          <ModalHeader color="white">Save Configuration</ModalHeader>
+          <ModalCloseButton />
+          <ModalBody>
+            <FormControl >
+              <FormLabel color="white" mb="2">Configuration Name</FormLabel>
+              <Input 
+                value={configName}
+                onChange={(e) => setConfigName(e.target.value)}
+                placeholder="Enter a name for this configuration"
+                color="white"
+              />
+            </FormControl>
+          </ModalBody>
+          <ModalFooter>
+            <Button colorScheme="blue" mr={3} onClick={saveConfiguration}>
+              Save
+            </Button>
+            <Button variant="ghost" onClick={onModalClose}>Cancel</Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
+      <Drawer isOpen={isDrawerOpen} placement="right" onClose={onDrawerClose}>
+        <DrawerOverlay>
+          <DrawerContent bg="gray.700">
+            <DrawerCloseButton />
+            <DrawerHeader color="white">Saved Configurations</DrawerHeader>
+            <DrawerBody>
+              <SavedConfigurations
+                configurations={savedConfigurations}
+                applyConfiguration={(config) => {
+                  applyConfiguration(config);
+                  onDrawerClose();
+                }}
+                deleteConfiguration={deleteConfiguration}
+              />
+            </DrawerBody>
+          </DrawerContent>
+        </DrawerOverlay>
+      </Drawer>
+      </Box>
     </DndProvider>
   );
 };

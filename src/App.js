@@ -9,6 +9,7 @@ import './App.css';
 import Results2 from './components/Results2'; // Import the new component
 import { ChakraProvider,extendTheme } from '@chakra-ui/react';
 const theme = extendTheme({
+  
   styles: {
     global: {
       'body': {
