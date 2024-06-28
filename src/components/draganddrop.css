@@ -1,13 +1,13 @@
 
   
-  .grid {
-    position: relative;
-    background-image: url('pallet.webp'); 
-    background-size: 100% 100%;
-    border: 2px solid black;
-    margin-top: 20px;
-    box-sizing: content-box;
-  }
+    .grid {
+      position: relative;
+      background-image: url('pallet.webp'); 
+      background-size: 100% 100%;
+      border: 2px solid black;
+      margin-top: 20px;
+      box-sizing: content-box;
+    }
   
   .box {
     position: absolute;

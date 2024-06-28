@@ -3,6 +3,19 @@ import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import BoxGrid from './BoxGrid';
 import "./draganddrop.css"
+import {
+  Box,
+  Button,
+  Flex,
+  FormControl,
+  FormLabel,
+  Heading,
+  Input,
+  Stack,
+  Text,
+  useColorModeValue,
+} from '@chakra-ui/react';
+
 function App({onSubmit}) {
   const [boxes, setBoxes] = useState([]);
   const [gridWidth, setGridWidth] = useState("5");
@@ -191,70 +204,140 @@ function App({onSubmit}) {
     const value = e.target.value.replace(/^0+/, '') || ''; // Allows empty string
     setter(value);
   };
+  const formBg = useColorModeValue('white', 'gray.100');
+  const inputBg = useColorModeValue('white', 'gray.50');
+  const inputBorder = useColorModeValue('gray.300', 'gray.600');
+
   return (
     <DndProvider backend={HTML5Backend}>
-      <div className="flex flex-1 justify-between px-4 pt-2 bg-gray-100 rounded-lg shadow-lg w-3/4 mx-auto flex-wrap">
-        <div className=" p-2 flex flex-col">
-          <h2 className="text-xl font-bold text-blue-600 mb-2">Manual Pallet Configuration</h2>
-          <p className="mb-4 text-gray-700">Enter the width, length, height, and weight of each unit below.</p>
-          <div className="form-controls space-y-4">
-
-            <div>
-              <label className="text-lg font-semibold text-gray-800">Box Dimensions (in meters)</label>
-              <div className="flex space-x-2">
-                <div className="flex flex-col">
-                  <label className="text-sm mb-1 text-gray-600">Width</label>
-                  <input type="number" value={boxWidth} onChange={(e) => setBoxWidth(e.target.value)} className="input w-20 px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"/>
-                </div>
-                <div className="flex flex-col">
-                  <label className="text-sm mb-1 text-gray-600">Length</label>
-                  <input type="number" value={boxLength} onChange={(e) => setBoxLength(e.target.value)} className="input w-20 px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"/>
-                </div>
-                <div className="flex flex-col">
-                  <label className="text-sm mb-1 text-gray-600">Height</label>
-                  <input type="number" value={boxHeight} onChange={(e) => setBoxHeight(e.target.value)} className="input w-20 px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"/>
-                </div>
-              </div>
-            </div>
-            <div>
-              <label className="text-lg font-semibold text-gray-800">Grid Dimensions (in meters)</label>
-              <div className="flex space-x-2">
-                <div className="flex flex-col">
-                  <label className="text-sm mb-1 text-gray-600">Width</label>
-                  <input type="number" value={gridWidth} onChange={(e) => setGridWidth(e.target.value)} className="input w-20 px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"/>
-                </div>
-                <div className="flex flex-col">
-                  <label className="text-sm mb-1 text-gray-600">Height</label>
-                  <input type="number" value={gridHeight} onChange={(e) => setGridHeight(e.target.value)} className="input w-20 px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"/>
-                </div>
-              </div>
-            </div>
-            <div className='flex flex-col'>
-              <label className="text-lg font-semibold text-gray-800">Number of Layers</label>
-              <input type="number" value={numLayers} onChange={(e) => setNumLayers(e.target.value)} className="input w-20 px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"/>
-            </div>
-            <div className="flex justify-between mt-5">
-              <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" onClick={addBox}>Add Box</button>
-              <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded ml-4" onClick={submitBoxes}>Submit Boxes</button>
-            </div>
-          </div>
-        </div>
-        <div className="flex items-center justify-center p-2">
-          <BoxGrid
-            boxes={boxes}
-            gridWidth={displayWidth}
-            gridHeight={displayHeight}
-            moveBox={moveBox}
-            rotateBox={rotateBox}
-            removeBox={removeBox}
-            scaleFactorWidth={scaleFactorWidth} // Adjusted for display
-            scaleFactorLength={scaleFactorLength} // Adjusted for display
-          />
-        </div>
-      </div>
+        <Box
+          bg={formBg}
+          rounded="lg"
+          shadow="lg"
+          p={8}
+          w={{ base: '100%', lg: '80%' }}
+          display="flex"
+          flexDirection={{ base: 'column', lg: 'row' }}
+          justifyContent="space-between"
+          alignItems="center"
+          h="75vh"
+        >
+          <Stack spacing={4} w={{ base: '100%', lg: '40%' }} mb={{ base: 4, lg: 0 }}>
+            <Heading as="h2" size="lg" color="blue.600">
+              Manual Pallet Configuration
+            </Heading>
+            <Text color="gray.600">
+              Enter the width, length, height, and weight of each unit below.
+            </Text>
+            <FormControl>
+              <FormLabel fontWeight="bold" color="gray.800">
+                Box Dimensions (in meters)
+              </FormLabel>
+              <Flex gap={4}>
+                <Box>
+                  <FormLabel>Width</FormLabel>
+                  <Input
+                    type="number"
+                    value={boxWidth}
+                    onChange={(e) => setBoxWidth(e.target.value)}
+                    bg={inputBg}
+                    borderColor={inputBorder}
+                  />
+                </Box>
+                <Box>
+                  <FormLabel>Length</FormLabel>
+                  <Input
+                    type="number"
+                    value={boxLength}
+                    onChange={(e) => setBoxLength(e.target.value)}
+                    bg={inputBg}
+                    borderColor={inputBorder}
+                  />
+                </Box>
+                <Box>
+                  <FormLabel>Height</FormLabel>
+                  <Input
+                    type="number"
+                    value={boxHeight}
+                    onChange={(e) => setBoxHeight(e.target.value)}
+                    bg={inputBg}
+                    borderColor={inputBorder}
+                  />
+                </Box>
+              </Flex>
+            </FormControl>
+            <FormControl>
+              <FormLabel fontWeight="bold" color="gray.800">
+                Grid Dimensions (in meters)
+              </FormLabel>
+              <Flex gap={4}>
+                <Box>
+                  <FormLabel>Width</FormLabel>
+                  <Input
+                    type="number"
+                    value={gridWidth}
+                    onChange={(e) => setGridWidth(e.target.value)}
+                    bg={inputBg}
+                    borderColor={inputBorder}
+                  />
+                </Box>
+                <Box>
+                  <FormLabel>Height</FormLabel>
+                  <Input
+                    type="number"
+                    value={gridHeight}
+                    onChange={(e) => setGridHeight(e.target.value)}
+                    bg={inputBg}
+                    borderColor={inputBorder}
+                  />
+                </Box>
+              </Flex>
+            </FormControl>
+            <FormControl>
+              <FormLabel fontWeight="bold" color="gray.800">
+                Number of Layers
+              </FormLabel>
+              <Input
+                type="number"
+                value={numLayers}
+                onChange={(e) => setNumLayers(e.target.value)}
+                width="100px"
+                bg={inputBg}
+                borderColor={inputBorder}
+              />
+            </FormControl>
+            <Flex justify="space-between" mt={4}>
+              <Button colorScheme="blue" onClick={addBox}>
+                Add Box
+              </Button>
+              <Button colorScheme="blue" onClick={submitBoxes}>
+                Submit Boxes
+              </Button>
+            </Flex>
+          </Stack>
+          <Box
+            flex="1"
+            display="flex"
+            alignItems="center"
+            justifyContent="center"
+            w={{ base: '100%', lg: '50%' }}
+            ml={{ lg: 4 }}
+          >
+            <BoxGrid
+              boxes={boxes}
+              gridWidth={displayWidth}
+              gridHeight={displayHeight}
+              moveBox={moveBox}
+              rotateBox={rotateBox}
+              removeBox={removeBox}
+              scaleFactorWidth={scaleFactorWidth} // Adjusted for display
+              scaleFactorLength={scaleFactorLength} // Adjusted for display
+            />
+          </Box>
+        </Box>
     </DndProvider>
   );
-}  
+};
   
 
 export default App;

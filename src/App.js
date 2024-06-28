@@ -7,6 +7,21 @@ import './App.css';
 // App.js
 // App.js
 import Results2 from './components/Results2'; // Import the new component
+import { ChakraProvider,extendTheme } from '@chakra-ui/react';
+const theme = extendTheme({
+  styles: {
+    global: {
+      'body': {
+        bg: 'gray.100',
+        color: 'black'
+      },
+      'input, textarea, select': {
+        bg: 'white',
+        color: 'black',
+      },
+    },
+  },
+});
 
 const App = () => {
   const [step, setStep] = useState(1);
@@ -45,13 +60,14 @@ const App = () => {
 
 
   return (
+    <ChakraProvider theme={theme}>
     <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100">
       <header className="w-full flex flex-wrap items-center justify-between bg-gray-100 shadow-md py-4 px-8">
         <img src={`${process.env.PUBLIC_URL}/orangewoodLogo.png`} alt="Logo" className="h-8" />
         <h1 className="text-2xl font-bold text-gray-800">3D Pallet Calculator and Configurator</h1>
       </header>
       <Navbar step={step} />
-      <div className="w-full py-4 flex justify-end pr-8">
+      <div className="w-full py-2 flex justify-end pr-8">
         <div className="flex items-center">
           <span className="mr-2 text-gray-600 font-medium">{mode === 'auto' ? 'Auto Mode' : 'Manual Mode'}</span>
           <label className="switch cursor-pointer">
@@ -72,6 +88,7 @@ const App = () => {
         {renderStep()}
       </div>
     </div>
+    </ChakraProvider>
   );
 };
 

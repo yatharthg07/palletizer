@@ -9,10 +9,10 @@ const Visual = ({ coordinates, palletDimensions }) => {
     useEffect(() => {
         // Setup scene, camera, and renderer
         const scene = new THREE.Scene();
-        const camera = new THREE.PerspectiveCamera(75, 1, 0.1, 1000);
+        const camera = new THREE.PerspectiveCamera(50, 500/400, 0.1, 1000);
         const renderer = new THREE.WebGLRenderer({ antialias: true });
         renderer.setClearColor("#f0f0f0");  // Light background color
-        renderer.setSize(600, 600);
+        renderer.setSize(500, 400);
         
         if (mountRef.current) {
             mountRef.current.appendChild(renderer.domElement);

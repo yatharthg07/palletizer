@@ -1,124 +1,130 @@
 from flask import Flask, request, jsonify
 from flask_socketio import SocketIO, emit
+from flask_cors import CORS
 import socket
 import struct
 import time
 import math
-from flask_cors import CORS
-app = Flask(__name__)
+from threading import Event
+
 app = Flask(__name__)
 CORS(app)
 socketio = SocketIO(app, cors_allowed_origins="*")
 
-# Placeholder for coordinates
-coordinates = []
+# ... (keep all the existing classes and functions)
+
+box_coords = []
+pickup_point = None
+transfer_point = None
+master_point = None
+num_layers = None
+
+user_input_event = Event()
 
 @app.route('/send-coordinates', methods=['POST'])
 def receive_coordinates():
-    global coordinates
-    coordinates = request.json['coordinates']
-    socketio.emit('update', {'message': 'Coordinates received successfully'})
-    return jsonify({'status': 'success'})
+    global box_coords, num_layers
+    data = request.json
+    coordinates = data['coordinates']
+    
+    # Filter coordinates for layer 1 and extract x, y, z
+    box_coords = [[coord['x'], coord['y'], coord['z']] for coord in coordinates if coord['layer'] == 1]
+    
+    # Get total layers
+    num_layers = coordinates[0]['totalLayers']
+    
+    return jsonify({'message': 'Coordinates received successfully'})
 
-def get_tcp_pose(robot_ip):
-    rb = RobotData()
-    try:
-        rb.connect(robot_ip)
-    except Exception as e:
-        print(f"Failed to connect to robot: {e}")
-        return None
+def wait_for_user_input():
+    user_input_event.clear()
+    user_input_event.wait()
 
-    data = rb.get_data()
-    if data:
-        tcp_position = [data['tcp_x'], data['tcp_y'], data['tcp_z'], data['rot_x'], data['rot_y'], data['rot_z']]
-        print("TCP Position [x, y, z, rx, ry, rz]:", tcp_position)
-    else:
-        print('Warning: No Data')
-        tcp_position = None
-
-    rb.disconnect()
-    return tcp_position
-
-def getMasterPoint():
+def get_master_point():
+    global pickup_point, transfer_point, master_point, num_layers
     robot_ip = '192.168.1.200'
-    socketio.emit('update', {'message': 'Set the home position and click Done'})
-    socketio.sleep(0)
-    socketio.sleep(0)
-    result = get_tcp_pose(robot_ip)
-    socketio.emit('update', {'message': 'Home position set'})
-    socketio.sleep(0)
+    
+    socketio.emit('prompt', {'message': 'Press done after reaching desired master location and switch robot to Remote mode'})
+    wait_for_user_input()
+    result = print(robot_ip)
+    socketio.emit('info', {'message': f'Master point: {result}'})
+    
+    socketio.emit('prompt', {'message': 'Press done after reaching desired transfer location'})
+    wait_for_user_input()
+    transfer = print(robot_ip)
+    socketio.emit('info', {'message': f'Transfer point: {transfer}'})
+    
+    socketio.emit('prompt', {'message': 'Press done after reaching desired pickup location'})
+    wait_for_user_input()
+    pickup = print(robot_ip)
+    socketio.emit('info', {'message': f'Pickup point: {pickup}'})
+    
+    return pickup, transfer, result
 
-    socketio.emit('update', {'message': 'Set the transfer position and click Done'})
-    socketio.sleep(0)
-    transfer = get_tcp_pose(robot_ip)
-    socketio.emit('update', {'message': 'Transfer position set'})
-    socketio.sleep(0)
+@socketio.on('done')
+def handle_done():
+    user_input_event.set()
 
-    socketio.emit('update', {'message': 'Set the pickup position and click Done'})
-    socketio.sleep(0)
-    pickup = get_tcp_pose(robot_ip)
-    socketio.emit('update', {'message': 'Pickup position set'})
-    socketio.sleep(0)
-
-    num_layers = 2  # Default value for number of layers
-    socketio.emit('update', {'message': 'Enter the number of layers', 'prompt': 'num_layers'})
-    socketio.sleep(0)
-
-    return pickup, transfer, result, num_layers
-
-def process_box_coordinates():
-    pickup_point, transfer_point, master_point, num_layers = getMasterPoint()
-
-    box_coords = coordinates
-
+@app.route('/start-process', methods=['POST'])
+def start_process():
+    global pickup_point, transfer_point, master_point, num_layers, box_coords
+    
+    pickup_point, transfer_point, master_point = get_master_point()
+    
     rb = RobotData()
     try:
         rb.connect('192.168.1.200')
 
         for layer in range(num_layers):
             for box in box_coords:
-                box_abs = [master_point[i] + box[i] for i in range(2)] + [master_point[2]] + master_point[3:]
-                rotation_angle = box[2]
+                box_abs = [master_point[i] + box['x'] for i in range(2)] + [master_point[2]] + master_point[3:]
+                rotation_angle = box['z']  # Assuming 'z' contains the rotation angle
                 pre_pickup = calculate_pre_point(pickup_point)
                 pre_place = calculate_pre_point(box_abs)
 
                 rb.movel(pre_pickup)
-                time.sleep(2)
+                socketio.emit('info', {'message': 'Moving to pre-pickup position'})
+                wait_for_user_input()
+
                 rb.movel(pickup_point)
-                time.sleep(2)
+                socketio.emit('info', {'message': 'Moving to pickup position'})
+                wait_for_user_input()
+
                 rb.movel(pre_pickup)
-                time.sleep(2)
+                socketio.emit('info', {'message': 'Moving back to pre-pickup position'})
+                wait_for_user_input()
 
                 transfer_point_rotated = apply_rotation(transfer_point.copy(), rotation_angle)
                 rb.movel(transfer_point_rotated)
-                time.sleep(3)
+                socketio.emit('info', {'message': 'Moving to rotated transfer point'})
+                wait_for_user_input()
 
                 rb.movel(pre_place)
-                time.sleep(3.5)
+                socketio.emit('info', {'message': 'Moving to pre-place position'})
+                wait_for_user_input()
+
                 rb.movel(box_abs)
-                time.sleep(3)
+                socketio.emit('info', {'message': 'Moving to place position'})
+                wait_for_user_input()
+
                 rb.movel(pre_place)
-                time.sleep(2)
+                socketio.emit('info', {'message': 'Moving back to pre-place position'})
+                wait_for_user_input()
+
                 rb.movel(transfer_point)
-                time.sleep(3)
+                socketio.emit('info', {'message': 'Moving to transfer point'})
+                wait_for_user_input()
 
             pickup_point[2] += 0
             master_point[2] += 0.1
+            socketio.emit('info', {'message': f'Completed layer {layer + 1}'})
 
+        socketio.emit('info', {'message': 'Task completed successfully'})
     except (socket.error, socket.timeout) as e:
-        print(f"Socket error: {e}")
+        socketio.emit('error', {'message': f'Socket error: {e}'})
     finally:
         rb.disconnect()
 
-    print("Pickup Point:", pickup_point)
-    print("Transfer Point:", transfer_point)
-    print("Master Point:", master_point)
-    print("Number of Layers:", num_layers)
-
-@socketio.on('start-process')
-def handle_start_process():
-    process_box_coordinates()
-    socketio.emit('update', {'message': 'Task completed'})
+    return jsonify({'message': 'Process completed'})
 
 if __name__ == '__main__':
     socketio.run(app, debug=True)
