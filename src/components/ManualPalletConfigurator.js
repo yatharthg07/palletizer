@@ -1,4 +1,4 @@
-import React, { useState, useEffect} from 'react';
+import React, { useState, useEffect,useRef} from 'react';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import BoxGrid from './BoxGrid';
@@ -48,6 +48,7 @@ function App({onSubmit}) {
   const [displayHeight, setDisplayHeight] = useState(500);
   const [nextId, setNextId] = useState(0);
   const [savedConfigurations, setSavedConfigurations] = useState([]);
+  const gridRef = useRef(null);
   const { 
     isOpen: isModalOpen, 
     onOpen: onModalOpen, 
@@ -68,7 +69,10 @@ function App({onSubmit}) {
   }, []);
 
 
-  const saveConfiguration = () => {
+  const saveConfiguration = async() => {
+    if (gridRef.current) {
+      const canvas = await html2canvas(gridRef.current);
+      const previewImage = canvas.toDataURL();  
     const newConfig = {
       name: configName,
       boxes: boxes,
@@ -83,6 +87,7 @@ function App({onSubmit}) {
       displayHeight: displayHeight,
       displayWidth: displayWidth,
       nextId: nextId,
+      previewImage
     };
     const updatedConfigurations = [...savedConfigurations, newConfig];
     setSavedConfigurations(updatedConfigurations);
@@ -96,6 +101,7 @@ function App({onSubmit}) {
       duration: 3000,
       isClosable: true,
     });
+  }
   };
 
   const applyConfiguration = (config) => {
@@ -451,7 +457,9 @@ function App({onSubmit}) {
             w={{ base: '100%', lg: '50%' }}
             ml={{ lg: 4 }}
           >
+            <Box ref={gridRef}>
             <BoxGrid
+              
               boxes={boxes}
               gridWidth={displayWidth}
               gridHeight={displayHeight}
@@ -461,6 +469,7 @@ function App({onSubmit}) {
               scaleFactorWidth={scaleFactorWidth} // Adjusted for display
               scaleFactorLength={scaleFactorLength} // Adjusted for display
             />
+          </Box>
           </Box>
         </Box>
         {/* <Box w="30%" ml={4}>
