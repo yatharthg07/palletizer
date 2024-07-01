@@ -1,8 +1,24 @@
 import React, { useState } from 'react';
 import axios from 'axios';
+import {
+  Box,
+  Button,
+  Flex,
+  FormControl,
+  FormLabel,
+  Heading,
+  Input,
+  Stack,
+  Text,
+  useColorModeValue,
+  Image,
+  Checkbox
+} from '@chakra-ui/react';
 
 
 const UnitInformation = ({ nextStep }) => {
+  const inputBg = useColorModeValue('white', 'gray.200');
+  const inputBorder = useColorModeValue('gray.300', 'gray.600');
     const [unitData, setUnitData] = useState({
         width: '',
         length: '',
@@ -46,133 +62,201 @@ const UnitInformation = ({ nextStep }) => {
 
     return (
     
-    <div className="flex flex-1 justify-between px-4 pt-4 pb-4 bg-white rounded-lg shadow-md w-4/5 m-auto flex-wrap">
-      <div className="w-full lg:w-1/2 p-2 flex flex-col">
-        <h2 className="text-lg font-bold text-blue-700 mb-2">Unit Information</h2>
-        <p className="mb-4 text-gray-800">Enter the width, length, height, and weight of each unit below.</p>
+      <Flex
+      position="relative"
+      display="flex"
+      justifyContent="center"
+      w="100%"
+      h="75vh"
+      overflow="hidden"
+    >
+      <Flex direction="row" w="80%" h="100%" overflow="hidden">
+        <Box
+          bg={useColorModeValue('white', 'gray.200')}
+          rounded="lg"
+          shadow="lg"
+          p={6}
+          w="100%"
+          display="flex"
+          flexDirection={{ base: 'column', lg: 'row' }}
+          justifyContent="space-between"
+          alignItems="center"
+          h="100%"
+        >
+          <Stack
+            spacing={2}
+            w={{ base: '100%', lg: '40%' }}
+            mb={{ base: 'auto', lg: 'auto' }}
+            overflowY="auto"
+            maxH="calc(100vh - 64px)" // Adjust max height to fit within the viewport
+          >
+            <Heading as="h2" size="lg" color="blue.600">
+              Unit Information
+            </Heading>
+            <Text color="gray.600">
+              Enter the width, length, height, and weight of each unit below.
+            </Text>
+            <form onSubmit={handleSubmit} className="flex flex-col space-y-4">
+              <FormControl>
+                <FormLabel fontWeight="bold" color="gray.800">
+                  Unit Dimensions (in Cm)
+                </FormLabel>
+                <Flex gap={4}>
+                  <Box>
+                    <FormLabel>Width</FormLabel>
+                    <Input
+                      type="number"
+                      name="width"
+                      value={unitData.width}
+                      onChange={handleChange}
+                      required
+                      bg={inputBg}
+                      borderColor={inputBorder}
+                    />
+                  </Box>
+                  <Box>
+                    <FormLabel>Length</FormLabel>
+                    <Input
+                      type="number"
+                      name="length"
+                      value={unitData.length}
+                      onChange={handleChange}
+                      required
+                      bg={inputBg}
+                      borderColor={inputBorder}
+                    />
+                  </Box>
+                  <Box>
+                    <FormLabel>Height</FormLabel>
+                    <Input
+                      type="number"
+                      name="height"
+                      value={unitData.height}
+                      onChange={handleChange}
+                      required
+                      bg={inputBg}
+                      borderColor={inputBorder}
+                    />
+                  </Box>
+                </Flex>
+              </FormControl>
 
-        <form onSubmit={handleSubmit} className="flex flex-col space-y-4">
-          <div>
-            <label className="block text-lg font-semibold mb-1 text-gray-900">Unit Dimensions (in Cm)</label>
-            <div className="flex space-x-2">
-              <div className="flex flex-col">
-                <label className="text-sm mb-1 text-gray-700">Width</label>
-                <input
+              <FormControl>
+                <FormLabel fontWeight="bold" color="gray.800">
+                  Unit Weight (in Kg)
+                </FormLabel>
+                <Input
                   type="number"
-                  name="width"
-                  value={unitData.width}
+                  name="weight"
+                  value={unitData.weight}
                   onChange={handleChange}
                   required
-                  className="w-20 px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-600"
+                  bg={inputBg}
+                  borderColor={inputBorder}
                 />
-              </div>
-              <div className="flex flex-col">
-                <label className="text-sm mb-1 text-gray-700">Length</label>
-                <input
-                  type="number"
-                  name="length"
-                  value={unitData.length}
-                  onChange={handleChange}
-                  required
-                  className="w-20 px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-600"
-                />
-              </div>
-              <div className="flex flex-col">
-                <label className="text-sm mb-1 text-gray-700">Height</label>
-                <input
-                  type="number"
-                  name="height"
-                  value={unitData.height}
-                  onChange={handleChange}
-                  required
-                  className="w-20 px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-600"
-                />
-              </div>
-            </div>
-          </div>
+              </FormControl>
 
-          <div>
-            <label className="block text-lg font-semibold mb-1 text-gray-900">Unit Weight (in Kg)</label>
-            <input
-              type="number"
-              name="weight"
-              value={unitData.weight}
-              onChange={handleChange}
-              required
-              className="w-24 px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-600"
-            />
-          </div>
+              <FormControl>
+                <FormLabel fontWeight="bold" color="gray.800">
+                  Pallet Dimensions (in Cm)
+                </FormLabel>
+                <Flex gap={4}>
+                  <Box>
+                    <FormLabel>Pallet Width</FormLabel>
+                    <Input
+                      type="number"
+                      name="palletWidth"
+                      value={unitData.palletWidth}
+                      onChange={handleChange}
+                      required
+                      bg={inputBg}
+                      borderColor={inputBorder}
+                    />
+                  </Box>
+                  <Box>
+                    <FormLabel>Pallet Length</FormLabel>
+                    <Input
+                      type="number"
+                      name="palletLength"
+                      value={unitData.palletLength}
+                      onChange={handleChange}
+                      required
+                      bg={inputBg}
+                      borderColor={inputBorder}
+                    />
+                  </Box>
+                </Flex>
+              </FormControl>
 
-          <div>
-            <label className="block text-lg font-semibold mb-1 text-gray-900">Pallet Dimensions (in Cm)</label>
-            <div className="flex space-x-2">
-              <div className="flex flex-col">
-                <label className="text-sm mb-1 text-gray-700">Pallet Width</label>
-                <input
-                  type="number"
-                  name="palletWidth"
-                  value={unitData.palletWidth}
-                  onChange={handleChange}
-                  required
-                  className="w-24 px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-600"
-                />
-              </div>
-              <div className="flex flex-col">
-                <label className="text-sm mb-1 text-gray-700">Pallet Length</label>
-                <input
-                  type="number"
-                  name="palletLength"
-                  value={unitData.palletLength}
-                  onChange={handleChange}
-                  required
-                  className="w-24 px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-600"
-                />
-              </div>
-            </div>
-          </div>
+              <FormControl>
+                <FormLabel fontWeight="bold" color="gray.800">
+                  Clearance
+                </FormLabel>
+                <Flex align="center" gap={2}>
+                  <Checkbox
+                    name="clearanceEnabled"
+                    isChecked={unitData.clearanceEnabled}
+                    onChange={handleChange}
+                    borderColor={inputBorder}
+                  />
+                  <Input
+                    type="number"
+                    name="clearance"
+                    value={unitData.clearance}
+                    onChange={handleChange}
+                    isDisabled={!unitData.clearanceEnabled}
+                    bg={inputBg}
+                    borderColor={inputBorder}
+                    _disabled={{ bg: 'gray.200' }}
+                  />
+                </Flex>
+              </FormControl>
 
-          <div>
-            <label className="block text-lg font-semibold mb-1 text-gray-900">Clearance</label>
-            <div className="flex items-center space-x-2">
-              <input
-                type="checkbox"
-                name="clearanceEnabled"
-                checked={unitData.clearanceEnabled}
-                onChange={handleChange}
-                className="h-4 w-4 text-blue-600 focus:ring-blue-600 border-gray-300 rounded"
+              <Flex justify="space-between" mt={4}>
+                <Button
+                  type="button"
+                  bg="gray.300"
+                  color="gray.900"
+                  _hover={{ bg: 'gray.400' }}
+                  focus={{ outline: 'none', ring: 2, ringColor: 'blue.600' }}
+                >
+                  Previous Step
+                </Button>
+                <Button
+                  type="submit"
+                  bg="blue.600"
+                  color="white"
+                  _hover={{ bg: 'blue.700' }}
+                  focus={{ outline: 'none', ring: 2, ringColor: 'blue.600' }}
+                >
+                  Next Step
+                </Button>
+              </Flex>
+            </form>
+          </Stack>
+          <Box
+            flex="1"
+            display="flex"
+            alignItems="center"
+            justifyContent="center"
+            w={{ base: '100%', lg: '50%' }}
+            ml={{ lg: 4 }}
+            maxH="100%"
+          >
+            <Box>
+              <Image
+                src={`${process.env.PUBLIC_URL}/box.png`}
+                alt="box"
+                maxW="full"
+                h="auto"
+                rounded="lg"
+                shadow="lg"
               />
-              <input
-                type="number"
-                name="clearance"
-                value={unitData.clearance}
-                onChange={handleChange}
-                disabled={!unitData.clearanceEnabled}
-                className="w-24 px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-600 disabled:bg-gray-200"
-              />
-            </div>
-          </div>
-
-          <div className="flex justify-between mt-4">
-            <button
-              type="button"
-              className="px-3 py-1 bg-gray-300 text-gray-900 rounded hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-600"
-            >
-              Previous Step
-            </button>
-            <button
-              type="submit"
-              className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-600"
-            >
-              Next Step
-            </button>
-          </div>
-        </form>
-      </div>
-
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-2">
-        <img src={`${process.env.PUBLIC_URL}/box.png`} alt="box" className="max-w-full h-auto rounded shadow-lg" />
-      </div>
-    </div>
+            </Box>
+          </Box>
+        </Box>
+      </Flex>
+    </Flex>
     );
 };
 
