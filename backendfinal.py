@@ -20,24 +20,6 @@ user_input_event = Event()
 
 DEFAULT_TIMEOUT = 10
 
-@app.route('/send-coordinates', methods=['POST'])
-def receive_coordinates():
-    global box_coords, num_layers
-    data = request.json
-    coordinates = data['coordinates']
-    
-    # Filter coordinates for layer 1 and extract x, y, z
-    box_coords = [[coord['x'], coord['y'], coord['z']] for coord in coordinates if coord['layer'] == 1]
-    
-    # Get total layers
-    num_layers = coordinates[0]['totalLayers']
-    
-    return jsonify({'message': 'Coordinates received successfully'})
-
-def wait_for_user_input():
-    user_input_event.clear()
-    user_input_event.wait()
-
 conname = ['total_message_len', 'total_message_type', 'mode_sub_len', 'mode_sub_type', 'timestamp', 'reserver',
            'reserver', 'is_robot_power_on', 'is_emergency_stopped', 'is_robot_protective_stopped', 'is_program_running',
            'is_program_paused', 'get_robot_mode', 'get_robot_control_mode', 'get_target_speed_fraction', 'get_speed_scaling',
@@ -78,6 +60,24 @@ conname = ['total_message_len', 'total_message_type', 'mode_sub_len', 'mode_sub_
 confmt = 'IBIBQ???????BBdddB??IIBdddiiiffffBidddiiiffffBidddiiiffffBidddiiiffffBidddiiiffffBidddiiiffffBiIBddddddddddddIBdddddddddddddddddddddddddddddddddddddddddddddddddddddIIIIIBIIBBBdddBBBdddffffB???BIB????BIBBBddfBffBIBIbBddddIB?III?Bff'
 
 
+@app.route('/send-coordinates', methods=['POST'])
+def receive_coordinates():
+    global box_coords, num_layers
+    data = request.json
+    coordinates = data['coordinates']
+    
+    # Filter coordinates for layer 1 and extract x, y, z
+    box_coords = [[coord['x'], coord['y'], coord['z']] for coord in coordinates if coord['layer'] == 1]
+    
+    # Get total layers
+    num_layers = coordinates[0]['totalLayers']
+    
+    return jsonify({'message': 'Coordinates received successfully'})
+
+def wait_for_user_input():
+    user_input_event.clear()
+    user_input_event.wait()
+    
 class RobotData():
     def __init__(self):
         self.data = {}
@@ -151,10 +151,13 @@ class RobotData():
 def get_tcp_pose(robot_ip):
     rb = RobotData()
     try:
+        socketio.emit('prompt', {'message': 'hi'})
+        
         rb.connect(robot_ip)
     except Exception as e:
         print(f"Failed to connect to robot: {e}")
         socketio.emit('error', {'message': f'Failed to connect to robot: {e}'})
+        
         exit(1)
 
     data = rb.get_data()
@@ -176,14 +179,12 @@ def get_master_point():
     socketio.emit('prompt', {'message': 'Press done after reaching desired master location and switch robot to Remote mode'})
     wait_for_user_input()
     result = get_tcp_pose(robot_ip)
-    # result=robot_ip
     socketio.emit('info', {'message': f'Master point: {result}'})
-    
+
     
     socketio.emit('prompt', {'message': 'Press done after reaching desired pickup location'})
     wait_for_user_input()
     pickup = get_tcp_pose(robot_ip)
-    # pickup=robot_ip
     socketio.emit('info', {'message': f'Pickup point: {pickup}'})
     
     return pickup, result
@@ -197,10 +198,6 @@ def apply_rotation(position, angle_rad):
     position[5] += angle_rad
     return position
 
-
-@socketio.on('done')
-def handle_done():
-    user_input_event.set()
 
 @app.route('/start-process', methods=['POST'])
 def start_process():
@@ -237,6 +234,8 @@ def start_process():
                 time.sleep(3)
                 rb.movel(pre_place_rotated)
                 time.sleep(2)
+
+                # Apply rotation to pre-pickup for next pickup
                 pre_pickup_rotated = apply_rotation(pre_pickup.copy(), -rotation_angle)
                 rb.movel(pre_pickup_rotated)
                 time.sleep(4)
@@ -246,9 +245,11 @@ def start_process():
             master_point[2] += 0.1
             
         socketio.emit('info', {'message': 'Task completed successfully'})
+
     except (socket.error, socket.timeout) as e:
         print(f"Socket error: {e}")
         socketio.emit('error', {'message': f'Socket error: {e}'})
+        
     finally:
         rb.disconnect()
 
@@ -256,7 +257,6 @@ def start_process():
     print("Master Point:", master_point)
     print("Number of Layers:", num_layers)
     return jsonify({'message': 'Process completed'})
-    
     
 if __name__ == '__main__':
     socketio.run(app, debug=True)    

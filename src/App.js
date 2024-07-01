@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState,useEffect } from 'react';
 import Navbar from './components/Navbar';
 import UnitInformation from './components/UnitInformation';
 import Results from './components/Results';
@@ -9,6 +9,8 @@ import './App.css';
 import Results2 from './components/Results2'; // Import the new component
 import { ChakraProvider,extendTheme } from '@chakra-ui/react';
 const theme = extendTheme({
+  initialColorMode: 'dark',
+  useSystemColorMode: false, 
   
   styles: {
     global: {
@@ -30,6 +32,16 @@ const App = () => {
   const [coordinates, setCoordinates] = useState([]); // State to hold coordinates from manual mode
 
   const [palletDimensions, setPalletDimensions] = useState({ width: 0, height: 0 });
+  console.log("Initial Color Mode:", theme.config.initialColorMode);
+  // useEffect(() => {
+  //   // Check and set the color mode in local storage
+  //   const colorModeKey = 'chakra-ui-color-mode';
+  //   const currentMode = localStorage.getItem(colorModeKey);
+  //   if (currentMode !== 'dark') {
+  //     localStorage.setItem(colorModeKey, 'dark');
+  //     window.location.reload(); // Reload the page to apply the theme correctly
+  //   }
+  // }, []);
 
   const handleManualSubmit = (data) => {
     setCoordinates(data.coordinates);

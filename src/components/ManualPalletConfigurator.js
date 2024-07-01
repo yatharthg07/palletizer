@@ -335,10 +335,10 @@ function App({onSubmit}) {
 
   return (
     <DndProvider backend={HTML5Backend}>
-      <Box position="relative" display="flex" justifyContent="center" w="100%" h="80%">
-        <Flex direction="row" w="80%" h="80%">
+      <Box position="relative" display="flex" justifyContent="center" w="100%" minH="75vh">
+        <Flex direction="column" w="100%" maxW="1200px" px={4}>
           <Box
-            bg={useColorModeValue('white', 'gray.200')}
+            bg={useColorModeValue('gray.200', 'gray.200')}
             rounded="lg"
             shadow="lg"
             p={8}
@@ -346,141 +346,131 @@ function App({onSubmit}) {
             display="flex"
             flexDirection={{ base: 'column', lg: 'row' }}
             justifyContent="space-between"
-            alignItems="center"
-            h="100%"
+            alignItems="stretch"
+            minH="70vh"
           >
-          <Stack spacing={4} w={{ base: '100%', lg: '40%' }} mb={{ base: 'auto', lg: 'auto' }}>
-            <Heading as="h2" size="lg" color="blue.600">
-              Manual Pallet Configuration
-            </Heading>
-            <Text color="gray.600">
-              Enter the width, length, height, and weight of each unit below.
-            </Text>
-            <FormControl>
-              <FormLabel fontWeight="bold" color="gray.800">
-                Box Dimensions (in meters)
-              </FormLabel>
-              <Flex gap={4}>
-                <Box>
-                  <FormLabel>Width</FormLabel>
-                  <Input
-                    type="number"
-                    value={boxWidth}
-                    onChange={(e) => setBoxWidth(e.target.value)}
-                    bg={inputBg}
-                    borderColor={inputBorder}
-                  />
-                </Box>
-                <Box>
-                  <FormLabel>Length</FormLabel>
-                  <Input
-                    type="number"
-                    value={boxLength}
-                    onChange={(e) => setBoxLength(e.target.value)}
-                    bg={inputBg}
-                    borderColor={inputBorder}
-                  />
-                </Box>
-                <Box>
-                  <FormLabel>Height</FormLabel>
-                  <Input
-                    type="number"
-                    value={boxHeight}
-                    onChange={(e) => setBoxHeight(e.target.value)}
-                    bg={inputBg}
-                    borderColor={inputBorder}
-                  />
-                </Box>
+            <Stack spacing={3} w={{ base: '100%', lg: '40%' }} mb={{ base: 8, lg: 0 }}>
+              <Heading as="h2" size="lg" color="blue.600">
+                Manual Pallet Configuration
+              </Heading>
+              <Text color="gray.600">
+                Enter the width, length, height, and weight of each unit below.
+              </Text>
+              <FormControl>
+                <FormLabel fontWeight="bold" color="gray.800">
+                  Box Dimensions (in meters)
+                </FormLabel>
+                <Flex gap={2} flexWrap="wrap">
+                  <Box flex="1" minW="80px">
+                    <FormLabel>Width</FormLabel>
+                    <Input
+                      type="number"
+                      value={boxWidth}
+                      onChange={(e) => setBoxWidth(e.target.value)}
+                      bg={inputBg}
+                      borderColor={inputBorder}
+                    />
+                  </Box>
+                  <Box flex="1" minW="80px">
+                    <FormLabel>Length</FormLabel>
+                    <Input
+                      type="number"
+                      value={boxLength}
+                      onChange={(e) => setBoxLength(e.target.value)}
+                      bg={inputBg}
+                      borderColor={inputBorder}
+                    />
+                  </Box>
+                  <Box flex="1" minW="80px">
+                    <FormLabel>Height</FormLabel>
+                    <Input
+                      type="number"
+                      value={boxHeight}
+                      onChange={(e) => setBoxHeight(e.target.value)}
+                      bg={inputBg}
+                      borderColor={inputBorder}
+                    />
+                  </Box>
+                </Flex>
+              </FormControl>
+              <FormControl>
+                <FormLabel fontWeight="bold" color="gray.800">
+                  Grid Dimensions (in meters)
+                </FormLabel>
+                <Flex gap={2} flexWrap="wrap">
+                  <Box flex="1" minW="80px">
+                    <FormLabel>Width</FormLabel>
+                    <Input
+                      type="number"
+                      value={gridWidth}
+                      onChange={(e) => setGridWidth(e.target.value)}
+                      bg={inputBg}
+                      borderColor={inputBorder}
+                    />
+                  </Box>
+                  <Box flex="1" minW="80px">
+                    <FormLabel>Height</FormLabel>
+                    <Input
+                      type="number"
+                      value={gridHeight}
+                      onChange={(e) => setGridHeight(e.target.value)}
+                      bg={inputBg}
+                      borderColor={inputBorder}
+                    />
+                  </Box>
+                </Flex>
+              </FormControl>
+              <FormControl>
+                <FormLabel fontWeight="bold" color="gray.800">
+                  Number of Layers
+                </FormLabel>
+                <Input
+                  type="number"
+                  value={numLayers}
+                  onChange={(e) => setNumLayers(e.target.value)}
+                  width="100%"
+                  maxW="200px"
+                  bg={inputBg}
+                  borderColor={inputBorder}
+                />
+              </FormControl>
+              <Flex justify="space-between" mt={4} flexWrap="wrap" gap={2}>
+                <Button colorScheme="blue" onClick={addBox} flex="1" minW="130px">
+                  Add Box
+                </Button>
+                <Button colorScheme="teal" onClick={onModalOpen} flex="1" minW="170px">
+                  Save Configuration
+                </Button>
+                <Button colorScheme="green" onClick={submitBoxes} flex="1" minW="130px">
+                  Submit Boxes
+                </Button>
               </Flex>
-            </FormControl>
-            <FormControl>
-              <FormLabel fontWeight="bold" color="gray.800">
-                Grid Dimensions (in meters)
-              </FormLabel>
-              <Flex gap={4}>
-                <Box>
-                  <FormLabel>Width</FormLabel>
-                  <Input
-                    type="number"
-                    value={gridWidth}
-                    onChange={(e) => setGridWidth(e.target.value)}
-                    bg={inputBg}
-                    borderColor={inputBorder}
-                  />
-                </Box>
-                <Box>
-                  <FormLabel>Height</FormLabel>
-                  <Input
-                    type="number"
-                    value={gridHeight}
-                    onChange={(e) => setGridHeight(e.target.value)}
-                    bg={inputBg}
-                    borderColor={inputBorder}
-                  />
-                </Box>
-              </Flex>
-            </FormControl>
-            <FormControl>
-              <FormLabel fontWeight="bold" color="gray.800">
-                Number of Layers
-              </FormLabel>
-              <Input
-                type="number"
-                value={numLayers}
-                onChange={(e) => setNumLayers(e.target.value)}
-                width="100px"
-                bg={inputBg}
-                borderColor={inputBorder}
-              />
-            </FormControl>
-            <Flex justify="space-between"  mt={4}>
-            <Button colorScheme="blue" onClick={addBox}>
-              Add Box
-            </Button>
-            <Button colorScheme="green" onClick={onModalOpen}>
-              Save Configuration
-            </Button>
-            <Button colorScheme="green" onClick={submitBoxes}>
-              Submit Boxes
-            </Button>
-
-            {/* <Button colorScheme="teal" onClick={onDrawerOpen}>
-              Saved Configurations
-            </Button> */}
-          </Flex>
-          </Stack>
-          <Box
-            flex="1"
-            display="flex"
-            alignItems="center"
-            justifyContent="center"
-            w={{ base: '100%', lg: '50%' }}
-            ml={{ lg: 4 }}
-          >
-            <Box ref={gridRef}>
-            <BoxGrid
-              
-              boxes={boxes}
-              gridWidth={displayWidth}
-              gridHeight={displayHeight}
-              moveBox={moveBox}
-              rotateBox={rotateBox}
-              removeBox={removeBox}
-              scaleFactorWidth={scaleFactorWidth} // Adjusted for display
-              scaleFactorLength={scaleFactorLength} // Adjusted for display
-            />
+            </Stack>
+            <Box
+              flex="1"
+              display="flex"
+              alignItems="center"
+              justifyContent="center"
+              w={{ base: '100%', lg: '60%' }}
+              mt={{ base: 8, lg: 0 }}
+              ml={{ lg: 4 }}
+            >
+              <Box ref={gridRef}>
+                <BoxGrid
+                  boxes={boxes}
+                  gridWidth={displayWidth}
+                  gridHeight={displayHeight}
+                  moveBox={moveBox}
+                  rotateBox={rotateBox}
+                  removeBox={removeBox}
+                  scaleFactorWidth={scaleFactorWidth}
+                  scaleFactorLength={scaleFactorLength}
+                />
+              </Box>
+            </Box>
           </Box>
-          </Box>
-        </Box>
-        {/* <Box w="30%" ml={4}>
-         <SavedConfigurations
-          configurations={savedConfigurations}
-          applyConfiguration={applyConfiguration}
-          deleteConfiguration={deleteConfiguration}
-        />
-        </Box> */}
-      </Flex>
-      <Button
+        </Flex>
+        <Button
           position="fixed"
           right="0"
           top="50%"
@@ -488,55 +478,56 @@ function App({onSubmit}) {
           colorScheme="teal"
           onClick={onDrawerOpen}
           zIndex="1000"
-          h="100px"
-          w="40px"
+          h={{ base: "60px", md: "100px" }}
+          w={{ base: "30px", md: "40px" }}
           borderRightRadius="0"
           borderLeftRadius="md"
-        > 
-          <ChevronLeftIcon boxSize={6} />
+          p={1}
+        >
+          <ChevronLeftIcon boxSize={{ base: 4, md: 6 }} />
         </Button>
-      <Modal isOpen={isModalOpen} onClose={onModalClose}>
-        <ModalOverlay />
-        <ModalContent>
-          <ModalHeader color="white">Save Configuration</ModalHeader>
-          <ModalCloseButton />
-          <ModalBody>
-            <FormControl >
-              <FormLabel color="white" mb="2">Configuration Name</FormLabel>
-              <Input 
-                value={configName}
-                onChange={(e) => setConfigName(e.target.value)}
-                placeholder="Enter a name for this configuration"
-                color="white"
-              />
-            </FormControl>
-          </ModalBody>
-          <ModalFooter>
-            <Button colorScheme="blue" mr={3} onClick={saveConfiguration}>
-              Save
-            </Button>
-            <Button variant="ghost" onClick={onModalClose}>Cancel</Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
-      <Drawer isOpen={isDrawerOpen} placement="right" onClose={onDrawerClose}>
-        <DrawerOverlay>
-          <DrawerContent bg="gray.700">
-            <DrawerCloseButton />
-            <DrawerHeader color="white">Saved Configurations</DrawerHeader>
-            <DrawerBody>
-              <SavedConfigurations
-                configurations={savedConfigurations}
-                applyConfiguration={(config) => {
-                  applyConfiguration(config);
-                  onDrawerClose();
-                }}
-                deleteConfiguration={deleteConfiguration}
-              />
-            </DrawerBody>
-          </DrawerContent>
-        </DrawerOverlay>
-      </Drawer>
+        <Modal isOpen={isModalOpen} onClose={onModalClose}>
+          <ModalOverlay />
+          <ModalContent bg='gray.700'>
+            <ModalHeader color="white">Save Configuration</ModalHeader>
+            <ModalCloseButton />
+            <ModalBody>
+              <FormControl>
+                <FormLabel color="white" mb="2">Configuration Name</FormLabel>
+                <Input 
+                  value={configName}
+                  onChange={(e) => setConfigName(e.target.value)}
+                  placeholder="Enter a name for this configuration"
+                  color="white"
+                />
+              </FormControl>
+            </ModalBody>
+            <ModalFooter>
+              <Button colorScheme="blue" mr={3} onClick={saveConfiguration}>
+                Save
+              </Button>
+              <Button variant="ghost" bg='red' onClick={onModalClose}>Cancel</Button>
+            </ModalFooter>
+          </ModalContent>
+        </Modal>
+        <Drawer isOpen={isDrawerOpen} placement="right" onClose={onDrawerClose}>
+          <DrawerOverlay>
+            <DrawerContent bg="gray.700">
+              <DrawerCloseButton />
+              <DrawerHeader color="white">Saved Configurations</DrawerHeader>
+              <DrawerBody>
+                <SavedConfigurations
+                  configurations={savedConfigurations}
+                  applyConfiguration={(config) => {
+                    applyConfiguration(config);
+                    onDrawerClose();
+                  }}
+                  deleteConfiguration={deleteConfiguration}
+                />
+              </DrawerBody>
+            </DrawerContent>
+          </DrawerOverlay>
+        </Drawer>
       </Box>
     </DndProvider>
   );
