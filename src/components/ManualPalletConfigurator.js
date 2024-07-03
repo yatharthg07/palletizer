@@ -351,7 +351,7 @@ function App({onSubmit}) {
             bg={useColorModeValue('gray.200', 'gray.200')}
             rounded="lg"
             shadow="lg"
-            p={8}
+            p={7}
             w="100%"
             display="flex"
             flexDirection={{ base: 'column', lg: 'row' }}

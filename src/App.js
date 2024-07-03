@@ -1,13 +1,12 @@
-import React, { useState,useEffect } from 'react';
+import React, { useState } from 'react';
+import { ChakraProvider, Box, Flex, Image, Heading, VStack, useColorModeValue, extendTheme } from '@chakra-ui/react';
 import Navbar from './components/Navbar';
 import UnitInformation from './components/UnitInformation';
 import Results from './components/Results';
-import DragAndDropPallet from './components/ManualPalletConfigurator'; // Assuming this is the drag-and-drop component
-import './App.css';
-// App.js
-// App.js
-import Results2 from './components/Results2'; // Import the new component
-import { ChakraProvider,extendTheme } from '@chakra-ui/react';
+import DragAndDropPallet from './components/ManualPalletConfigurator';
+import Results2 from './components/Results2';
+import ModeToggle from './components/ModeToggle';
+
 const theme = extendTheme({
   initialColorMode: 'dark',
   useSystemColorMode: false, 
@@ -28,29 +27,25 @@ const theme = extendTheme({
 
 const App = () => {
   const [step, setStep] = useState(1);
-  const [mode, setMode] = useState('auto'); // 'auto' or 'manual'
-  const [coordinates, setCoordinates] = useState([]); // State to hold coordinates from manual mode
-
+  const [mode, setMode] = useState('manual');
+  const [coordinates, setCoordinates] = useState([]);
   const [palletDimensions, setPalletDimensions] = useState({ width: 0, height: 0 });
-  console.log("Initial Color Mode:", theme.config.initialColorMode);
-  // useEffect(() => {
-  //   // Check and set the color mode in local storage
-  //   const colorModeKey = 'chakra-ui-color-mode';
-  //   const currentMode = localStorage.getItem(colorModeKey);
-  //   if (currentMode !== 'dark') {
-  //     localStorage.setItem(colorModeKey, 'dark');
-  //     window.location.reload(); // Reload the page to apply the theme correctly
-  //   }
-  // }, []);
+
+  const bgOverlay = useColorModeValue('rgba(255, 255, 255, 0.8)', 'rgba(26, 32, 44, 0.8)');
+  const headerBgColor = useColorModeValue('white', 'gray.800');
+  const headerShadow = useColorModeValue('sm', 'md');
+  const contentBgColor = useColorModeValue('whiteAlpha.800', 'blackAlpha.600');
 
   const handleManualSubmit = (data) => {
     setCoordinates(data.coordinates);
     setPalletDimensions({ width: data.gridWidth, height: data.gridHeight });
     setStep(4);
   };
+
   const nextStep = () => setStep(step + 1);
   const prevStep = () => setStep(step - 1);
   const toggleMode = () => setMode(mode === 'auto' ? 'manual' : 'auto');
+
   const renderStep = () => {
     if (mode === 'auto') {
       switch (step) {
@@ -69,38 +64,47 @@ const App = () => {
     }
   };
 
-  
-
-
   return (
     <ChakraProvider theme={theme}>
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100">
-      <header className="w-full flex flex-wrap items-center justify-between bg-gray-100 shadow-md py-4 px-8">
-        <img src={`${process.env.PUBLIC_URL}/orangewoodLogo.png`} alt="Logo" className="h-8" />
-        <h1 className="text-2xl font-bold text-gray-800">3D Pallet Calculator and Configurator</h1>
-      </header>
-      <Navbar step={step} />
-      <div className="w-full py-2 flex justify-end pr-8">
-        <div className="flex items-center">
-          <span className="mr-2 text-gray-600 font-medium">{mode === 'auto' ? 'Auto Mode' : 'Manual Mode'}</span>
-          <label className="switch cursor-pointer">
-            <input type="checkbox" checked={mode === 'manual'} onChange={toggleMode} className="sr-only"/>
-            <div className="toggle-bg bg-gray-200 border-2 border-gray-200 h-6 w-11 rounded-full p-1 duration-300 ease-in-out">
-              <div className={`toggle-dot bg-white w-4 h-4 rounded-full shadow-md transform ${mode === 'manual' ? 'translate-x-5' : 'translate-x-0'}`}></div>
-            </div>
-          </label>
-        </div>
-      </div>
-      <div
-        className="w-full flex-1 bg-white p-4 rounded shadow-md flex flex-col items-center justify-center"
-        style={{
-          backgroundImage: `url(${process.env.PUBLIC_URL}/backgroundImage_2.png)`,
-          backgroundSize: 'cover',
-        }}
+      <Box
+        minH="100vh"
+        backgroundImage={`url(${process.env.PUBLIC_URL}/backgroundImage_2.png)`}
+        backgroundSize="cover"
+        backgroundPosition="center"
+        backgroundAttachment="fixed"
       >
-        {renderStep()}
-      </div>
-    </div>
+        <Box  minH="100vh">
+          <Flex
+            as="header"
+            align="center"
+            justify="space-between"
+            wrap="wrap"
+            padding="1.2rem"
+            bg={headerBgColor}
+            color="gray.800"
+            boxShadow={headerShadow}
+          >
+            <Image src={`${process.env.PUBLIC_URL}/orangewoodLogo.png`} alt="Logo" h="8" />
+            <Heading as="h1" size="lg" letterSpacing={'tight'}>
+              3D Pallet Calculator and Configurator
+            </Heading>
+          </Flex>
+
+          <VStack spacing={2} align="stretch" >
+            <Navbar step={step} />
+            <Flex justify="flex-end" w="full" >
+              <ModeToggle mode={mode} toggleMode={toggleMode} />
+            </Flex>
+            <Box
+              flex="1"
+              display='flex'
+              justifyContent='center'
+            >
+              {renderStep()}
+            </Box>
+          </VStack>
+        </Box>
+      </Box>
     </ChakraProvider>
   );
 };
