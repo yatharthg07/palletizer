@@ -1,4 +1,4 @@
-import React, { useState, useEffect,useRef} from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import BoxGrid from './BoxGrid';
@@ -32,10 +32,13 @@ import {
   DrawerOverlay,
   DrawerContent,
   DrawerCloseButton,
+  Switch,
 } from '@chakra-ui/react';
 
 function App({onSubmit}) {
-  const [boxes, setBoxes] = useState([]);
+  const [oddBoxes, setOddBoxes] = useState([]);
+  const [evenBoxes, setEvenBoxes] = useState([]);
+  const [currentLayer, setCurrentLayer] = useState('odd');
   const [gridWidth, setGridWidth] = useState("5");
   const [gridHeight, setGridHeight] = useState("5");
   const [boxWidth, setBoxWidth] = useState("1");
@@ -61,6 +64,7 @@ function App({onSubmit}) {
   } = useDisclosure();
   const [configName, setConfigName] = useState('');
   const toast = useToast();
+
   useEffect(() => {
     const loadedConfigurations = localStorage.getItem('palletConfigurations');
     if (loadedConfigurations) {
@@ -68,44 +72,45 @@ function App({onSubmit}) {
     }
   }, []);
 
-
   const saveConfiguration = async() => {
     if (gridRef.current) {
       const canvas = await html2canvas(gridRef.current);
       const previewImage = canvas.toDataURL();  
-    const newConfig = {
-      name: configName,
-      boxes: boxes,
-      gridWidth,
-      gridHeight,
-      boxWidth,
-      boxLength,
-      boxHeight,
-      numLayers,
-      scaleFactorWidth: scaleFactorWidth,
-      scaleFactorLength: scaleFactorLength,
-      displayHeight: displayHeight,
-      displayWidth: displayWidth,
-      nextId: nextId,
-      previewImage
-    };
-    const updatedConfigurations = [...savedConfigurations, newConfig];
-    setSavedConfigurations(updatedConfigurations);
-    localStorage.setItem('palletConfigurations', JSON.stringify(updatedConfigurations));
-    onModalClose();
-    setConfigName('');
-    toast({
-      title: "Configuration saved",
-      description: `${configName} has been saved successfully.`,
-      status: "success",
-      duration: 3000,
-      isClosable: true,
-    });
-  }
+      const newConfig = {
+        name: configName,
+        oddBoxes,
+        evenBoxes,
+        gridWidth,
+        gridHeight,
+        boxWidth,
+        boxLength,
+        boxHeight,
+        numLayers,
+        scaleFactorWidth,
+        scaleFactorLength,
+        displayHeight,
+        displayWidth,
+        nextId,
+        previewImage
+      };
+      const updatedConfigurations = [...savedConfigurations, newConfig];
+      setSavedConfigurations(updatedConfigurations);
+      localStorage.setItem('palletConfigurations', JSON.stringify(updatedConfigurations));
+      onModalClose();
+      setConfigName('');
+      toast({
+        title: "Configuration saved",
+        description: `${configName} has been saved successfully.`,
+        status: "success",
+        duration: 3000,
+        isClosable: true,
+      });
+    }
   };
 
   const applyConfiguration = (config) => {
-    setBoxes(config.boxes);
+    setOddBoxes(config.oddBoxes);
+    setEvenBoxes(config.evenBoxes);
     setGridWidth(config.gridWidth);
     setGridHeight(config.gridHeight);
     setBoxWidth(config.boxWidth);
@@ -124,8 +129,6 @@ function App({onSubmit}) {
       duration: 3000,
       isClosable: true,
     });
-    console.log(config);
-    console.log(nextId);
   };
 
   const deleteConfiguration = (configToDelete) => {
@@ -165,16 +168,15 @@ function App({onSubmit}) {
     setScaleFactorLength(heightScale * 100);
   }, [gridWidth, gridHeight]);
 
-
   useEffect(() => {
     // Update all boxes with the new dimensions
-    const updatedBoxes = boxes.map(box => {
-      if (box.rotate==1||box.rotate==3) {
+    const updateBoxes = (boxes) => boxes.map(box => {
+      if (box.rotate === 1 || box.rotate === 3) {
         return {
           ...box,
-          width: Number(boxLength),  // Swap width and length
+          width: Number(boxLength),
           height: Number(boxHeight),
-          length: Number(boxWidth),  // Swap length and width
+          length: Number(boxWidth),
         };
       } else {
         return {
@@ -185,8 +187,10 @@ function App({onSubmit}) {
         };
       }
     });
-    setBoxes(updatedBoxes);
-  }, [boxWidth, boxHeight, boxLength]); 
+
+    setOddBoxes(updateBoxes(oddBoxes));
+    setEvenBoxes(updateBoxes(evenBoxes));
+  }, [boxWidth, boxHeight, boxLength]);
 
   const addBox = () => {
     const newBox = {
@@ -194,16 +198,18 @@ function App({onSubmit}) {
       x: 10,
       y: 10,
       width: Number(boxWidth),
-      length: Number(boxLength),  // Changed to boxLength
+      length: Number(boxLength),
       height: Number(boxHeight),
-      layer: 1,  // Default to layer 1
       rotate: 0
     };
-    setBoxes([...boxes, newBox]); 
+    if (currentLayer === 'odd') {
+      setOddBoxes([...oddBoxes, newBox]);
+    } else {
+      setEvenBoxes([...evenBoxes, newBox]);
+    }
     setNextId(nextId + 1);
   };
 
-  
   const boxesOverlap = (box1, box2) => {
     return (
       box1.x < box2.x + box2.width &&
@@ -212,18 +218,21 @@ function App({onSubmit}) {
       box1.y + box1.length > box2.y
     );
   };
+
   const moveBox = (id, x, y) => {
+    const boxes = currentLayer === 'odd' ? oddBoxes : evenBoxes;
+    const setBoxes = currentLayer === 'odd' ? setOddBoxes : setEvenBoxes;
+
     const movingBox = boxes.find(box => box.id === id);
     const scaledWidth = movingBox.width * scaleFactorWidth;
     const scaledLength = movingBox.length * scaleFactorLength;
     let newX = Math.max(0, Math.min(Number(gridWidth) * scaleFactorWidth - scaledWidth, x));
     let newY = Math.max(0, Math.min(Number(gridHeight) * scaleFactorLength - scaledLength, y));
   
-    const alignmentThreshold = 15; // pixels within which boxes will snap to each other
+    const alignmentThreshold = 15;
     let snapX = newX;
     let snapY = newY;
   
-    // Iterate through all boxes to find the closest edge within the threshold and check for overlap
     boxes.forEach(otherBox => {
       if (otherBox.id !== id) {
         const otherX = otherBox.x;
@@ -231,7 +240,6 @@ function App({onSubmit}) {
         const otherWidth = otherBox.width * scaleFactorWidth;
         const otherLength  = otherBox.length * scaleFactorLength;
   
-        // Magnetic alignment calculations
         if (Math.abs(newX + scaledWidth - otherX) < alignmentThreshold) {
           snapX = otherX - scaledWidth;
         } else if (Math.abs(newX - (otherX + otherWidth)) < alignmentThreshold) {
@@ -246,7 +254,6 @@ function App({onSubmit}) {
       }
     });
   
-    // Use the snapped coordinates if they do not cause an overlap
     const testPosition = { ...movingBox, x: snapX, y: snapY, width: scaledWidth, length: scaledLength };
     const overlapExists = boxes.some(otherBox =>
       otherBox.id !== id && boxesOverlap(testPosition, {
@@ -258,7 +265,6 @@ function App({onSubmit}) {
       })
     );
   
-    // Update the box position only if there is no overlap
     if (!overlapExists) {
       setBoxes(boxes.map(box => {
         if (box.id === id) {
@@ -270,36 +276,32 @@ function App({onSubmit}) {
       console.error("Overlap detected, move not allowed. Trying to move Box", id, "to", newX, newY);
     }
   };
-  
-  
-  
-  
 
   const rotateBox = (id) => {
-    setBoxes(boxes.map(box => {
+    const setBoxes = currentLayer === 'odd' ? setOddBoxes : setEvenBoxes;
+    setBoxes(prevBoxes => prevBoxes.map(box => {
       if (box.id === id) {
         const newRotationState = (box.rotate + 1) % 4;
-        return { ...box, width: box.length, length: box.width,rotate:newRotationState };
+        return { ...box, width: box.length, length: box.width, rotate: newRotationState };
       }
       return box;
     }));
-    console.log(boxes);
   };
 
   const removeBox = id => {
-    setBoxes(boxes.filter(box => box.id !== id));
+    const setBoxes = currentLayer === 'odd' ? setOddBoxes : setEvenBoxes;
+    setBoxes(prevBoxes => prevBoxes.filter(box => box.id !== id));
   };
 
-  
-
   const submitBoxes = () => {
-    const coordinates = boxes.map(box => {
-      const results = [];
-      for (let layer = 1; layer <= numLayers; layer++) {
-        const z = box.height * (layer - 0.5);  // Calculate center Z for each layer
+    const coordinates = [];
+    for (let layer = 1; layer <= numLayers; layer++) {
+      const boxes = layer % 2 === 1 ? oddBoxes : evenBoxes;
+      boxes.forEach(box => {
+        const z = box.height * (layer - 0.5);
         const xCenter = ((box.x + (box.width * scaleFactorWidth / 2)) / scaleFactorWidth).toFixed(3);
         const yCenter = ((box.y + (box.length * scaleFactorLength / 2)) / scaleFactorLength).toFixed(3);
-        results.push({
+        coordinates.push({
           id: box.id,
           layer: layer,
           x: parseFloat(xCenter),
@@ -310,26 +312,32 @@ function App({onSubmit}) {
           length: box.length,
           totalLayers: numLayers,
         });
-      }
-      return results;
-    }).flat(); // Flatten the array if multiple layers produce multiple entries per box
+      });
+    }
     
-    // Call the onSubmit function passed via props with the necessary data
     onSubmit({
       coordinates: coordinates,
       gridWidth: parseFloat(gridWidth),
       gridHeight: parseFloat(gridHeight)
     });
-    console.log(boxes)
   };
-  
-  
 
-
-  const handleDimensionChange = (setter) => (e) => {
-    const value = e.target.value.replace(/^0+/, '') || ''; // Allows empty string
-    setter(value);
+  const handleLayerChange = () => {
+    setCurrentLayer(prev => prev === 'odd' ? 'even' : 'odd');
   };
+
+  const copyOddToEven = () => {
+    setEvenBoxes([...oddBoxes.map(box => ({...box, id: nextId + box.id}))]);
+    setNextId(nextId + oddBoxes.length);
+    toast({
+      title: "Configuration copied",
+      description: "Odd layer configuration has been copied to even layers.",
+      status: "success",
+      duration: 3000,
+      isClosable: true,
+    });
+  };
+
   const formBg = useColorModeValue('white', 'gray.100');
   const inputBg = useColorModeValue('white', 'gray.50');
   const inputBorder = useColorModeValue('gray.300', 'gray.600');
@@ -357,7 +365,20 @@ function App({onSubmit}) {
               <Text color="gray.600">
                 Enter the width, length, height, and weight of each unit below.
               </Text>
+              <FormControl display="flex" alignItems="center">
+                <FormLabel htmlFor="layer-switch" mb="0">
+                  Current Layer: {currentLayer.charAt(0).toUpperCase() + currentLayer.slice(1)}
+                </FormLabel>
+                <Switch id="layer-switch" onChange={handleLayerChange} />
+                {currentLayer === 'even' && (
+                <Button size="xs" ml={3} colorScheme="purple" onClick={copyOddToEven}>
+                  Copy Odd Config
+                </Button>
+              )}
+              </FormControl>
+
               <FormControl>
+
                 <FormLabel fontWeight="bold" color="gray.800">
                   Box Dimensions (in meters)
                 </FormLabel>
@@ -458,7 +479,7 @@ function App({onSubmit}) {
             >
               <Box ref={gridRef}>
                 <BoxGrid
-                  boxes={boxes}
+                  boxes={currentLayer === 'odd' ? oddBoxes : evenBoxes}
                   gridWidth={displayWidth}
                   gridHeight={displayHeight}
                   moveBox={moveBox}
@@ -532,7 +553,6 @@ function App({onSubmit}) {
       </Box>
     </DndProvider>
   );
-};
-  
+}
 
 export default App;

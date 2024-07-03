@@ -7,6 +7,7 @@ import Visual from './Visual';
 const socket = io('http://localhost:5000');
 
 const Results2 = ({ coordinates, palletDimensions, prevStep }) => {
+  console.log(coordinates);
   const [messages, setMessages] = useState([{type:'prompt',content:"Trying to connect"}]);
   const [waitingForInput, setWaitingForInput] = useState(false);
   const [processStarted, setProcessStarted] = useState(false);

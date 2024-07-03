@@ -10,7 +10,8 @@ from threading import Event
 app = Flask(__name__)
 CORS(app)
 socketio = SocketIO(app, cors_allowed_origins="*")
-box_coords = []
+box_coords_odd = []
+box_coords_even=[]
 pickup_point = None
 transfer_point = None
 master_point = None
@@ -22,15 +23,18 @@ DEFAULT_TIMEOUT = 10
 
 @app.route('/send-coordinates', methods=['POST'])
 def receive_coordinates():
-    global box_coords, num_layers
+    global box_coords_odd,box_coords_even, num_layers
     data = request.json
     coordinates = data['coordinates']
     
     # Filter coordinates for layer 1 and extract x, y, z
-    box_coords = [[coord['x'], coord['y'],0] for coord in coordinates if coord['layer'] == 1]
+    box_coords_odd = [[coord['x'], coord['y'],0] for coord in coordinates if coord['layer'] == 1]
+    box_coords_even = [[coord['x'], coord['y'],0] for coord in coordinates if coord['layer'] == 2]
     
     # Get total layers
     num_layers = coordinates[0]['totalLayers']
+    print(box_coords_odd)
+    print(box_coords_even)
     
     return jsonify({'message': 'Coordinates received successfully'})
 
@@ -204,7 +208,7 @@ def handle_done():
 
 @app.route('/start-process', methods=['POST'])
 def start_process():
-    global pickup_point, transfer_point, master_point, num_layers, box_coords
+    global pickup_point, transfer_point, master_point, num_layers, box_coords_even,box_coords_odd
     
     pickup_point, master_point = get_master_point()
 
@@ -214,6 +218,11 @@ def start_process():
 
         current_angle = 0  # Initialize the current angle
         for layer in range(num_layers):
+            if layer % 2 == 0:
+                box_coords = box_coords_even
+            else:
+                box_coords = box_coords_odd
+            
             for box in box_coords:
                 box_abs = [master_point[i] + box[i] for i in range(2)] + [master_point[2]] + master_point[3:]
                 rotation_angle = box[2]  # Get the rotation angle
