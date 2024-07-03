@@ -303,6 +303,7 @@ function App({onSubmit}) {
         const yCenter = ((box.y + (box.length * scaleFactorLength / 2)) / scaleFactorLength).toFixed(3);
         coordinates.push({
           id: box.id,
+          rotate: box.rotate,
           layer: layer,
           x: parseFloat(xCenter),
           y: parseFloat(yCenter),

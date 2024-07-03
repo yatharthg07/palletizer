@@ -28,8 +28,8 @@ def receive_coordinates():
     coordinates = data['coordinates']
     
     # Filter coordinates for layer 1 and extract x, y, z
-    box_coords_odd = [[coord['x'], coord['y'],0] for coord in coordinates if coord['layer'] == 1]
-    box_coords_even = [[coord['x'], coord['y'],0] for coord in coordinates if coord['layer'] == 2]
+    box_coords_odd = [[coord['x'], coord['y'],coord['rotate']*math.pi/2] for coord in coordinates if coord['layer'] == 1]
+    box_coords_even = [[coord['x'], coord['y'],coord['rotate']*math.pi/2] for coord in coordinates if coord['layer'] == 2]
     
     # Get total layers
     num_layers = coordinates[0]['totalLayers']
