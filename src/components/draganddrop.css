@@ -1,32 +1,94 @@
+.grid {
+  position: relative;
+  background-image: url('pallet.webp'); 
+  background-size: 100% 100%;
+  border: 2px solid #34495e;
+  box-sizing: content-box;
+}
 
-  
-    .grid {
-      position: relative;
-      background-image: url('pallet.webp'); 
-      background-size: 100% 100%;
-      border: 2px solid black;
-      box-sizing: content-box;
-    }
-  
-  .box {
-    position: absolute;
-    box-sizing: border-box;
-    background-color: #C2A661; /* Light brown color to mimic cardboard */
-    border: 2px solid #916A2D;
-    /* box-shadow: 3px 3px 5px rgba(0,0,0,0.3); Soft shadow for 3D effect */
-    color: black;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-size: 0.9rem;
-    cursor: move;
-  }
-  
-  .remove-btn {
-    background-color: red;
-    border: none;
-    color: white;
-    padding: 2px 5px;
-    margin-left: 5px;
-    cursor: pointer;
-  }
+.box {
+  position: absolute;
+  box-sizing: border-box;
+  background-color: #f0e68c;
+  border: 2px solid #daa520;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.08);
+  color: #34495e;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 8px;
+  font-family: 'Arial', sans-serif;
+  transition: all 0.3s ease;
+  cursor: move;
+}
+
+.box:hover {
+  box-shadow: 0 7px 14px rgba(0, 0, 0, 0.15), 0 3px 6px rgba(0, 0, 0, 0.1);
+}
+
+.box-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.box-id {
+  font-size: 1rem;
+  font-weight: bold;
+}
+
+.box-controls {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: -2px;
+  left: 2px;
+}
+
+.control-btn {
+  position: absolute;
+  background-color: rgba(255, 255, 255, 0.8);
+  border: none;
+  color: #34495e;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.control-btn:hover {
+  background-color: #34495e;
+  color: #fff;
+  /* transform: scale(1.1); */
+}
+
+.rotate-btn {
+  top: 52%;
+  left: 48%;
+  transform: translate(-50%, -50%);
+}
+
+.remove-btn {
+  top: 4px;
+  right: 4px;
+  background-color: #ff7667;
+}
+
+.front-label {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #2c3e50;
+  transition: all 0.3s ease;
+}
+
+.front-label svg {
+  color: #e74c3c;
+}

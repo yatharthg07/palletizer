@@ -55,6 +55,7 @@ if (gridWidth <= 0 || gridHeight <= 0) {
           moveBox={moveBox}
           rotateBox={rotateBox}
           removeBox={removeBox}
+          rotate={box.rotate}
         />
       ))}
     </div>

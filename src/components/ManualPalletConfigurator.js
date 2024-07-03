@@ -169,7 +169,7 @@ function App({onSubmit}) {
   useEffect(() => {
     // Update all boxes with the new dimensions
     const updatedBoxes = boxes.map(box => {
-      if (box.rotate) {
+      if (box.rotate==1||box.rotate==3) {
         return {
           ...box,
           width: Number(boxLength),  // Swap width and length
@@ -197,7 +197,7 @@ function App({onSubmit}) {
       length: Number(boxLength),  // Changed to boxLength
       height: Number(boxHeight),
       layer: 1,  // Default to layer 1
-      rotate: false
+      rotate: 0
     };
     setBoxes([...boxes, newBox]); 
     setNextId(nextId + 1);
@@ -278,7 +278,8 @@ function App({onSubmit}) {
   const rotateBox = (id) => {
     setBoxes(boxes.map(box => {
       if (box.id === id) {
-        return { ...box, width: box.length, length: box.width,rotate:!box.rotate };
+        const newRotationState = (box.rotate + 1) % 4;
+        return { ...box, width: box.length, length: box.width,rotate:newRotationState };
       }
       return box;
     }));

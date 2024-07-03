@@ -1,62 +1,92 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 
 const Visual = ({ coordinates, palletDimensions }) => {
     const mountRef = useRef(null);
     const rendererRef = useRef(null);
+    const [size, setSize] = useState({ width: 500, height: 400 });
 
     useEffect(() => {
-        // Setup scene, camera, and renderer
-        const scene = new THREE.Scene();
-        const camera = new THREE.PerspectiveCamera(50, 500/400, 0.1, 1000);
-        const renderer = new THREE.WebGLRenderer({ antialias: true });
-        renderer.setClearColor("#f0f0f0");  // Light background color
-        renderer.setSize(500, 400);
-        
-        if (mountRef.current) {
-            mountRef.current.appendChild(renderer.domElement);
-            rendererRef.current = renderer;  // Store the renderer for cleanup
-        }
+        const updateSize = () => {
+            if (mountRef.current) {
+                setSize({
+                    width: mountRef.current.clientWidth,
+                    height: mountRef.current.clientHeight
+                });
+            }
+        };
 
+        window.addEventListener('resize', updateSize);
+        updateSize();
+
+        return () => window.removeEventListener('resize', updateSize);
+    }, []);
+
+    useEffect(() => {
+        if (!mountRef.current) return;
+
+        // Setup scene
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0xf0f0f0);
+
+        // Setup camera
+        const aspect = size.width / size.height;
+        const camera = new THREE.PerspectiveCamera(50, aspect, 0.1, 2000);
+        camera.position.set(800, 400, 800);
+        camera.lookAt(new THREE.Vector3(0, 0, 0));
+
+        // Setup renderer
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(size.width, size.height);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        mountRef.current.appendChild(renderer.domElement);
+        rendererRef.current = renderer;
+
+        // Setup controls
         const controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
 
         // Lighting
-        const ambientLight = new THREE.AmbientLight(0xffffff); // soft white light
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
         scene.add(ambientLight);
-        const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
+
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
         directionalLight.position.set(1, 1, 1);
         scene.add(directionalLight);
 
         // Pallet
-        const palletGeometry = new THREE.BoxGeometry(palletDimensions.width * 100, 10, palletDimensions.height * 100);
-        const palletMaterial = new THREE.MeshLambertMaterial({ color: 0xE1C16E   }); // Dark brown
+        const palletGeometry = new THREE.BoxGeometry(palletDimensions.width * 100, 1 , palletDimensions.height * 100);
+        const palletMaterial = new THREE.MeshPhongMaterial({ color: 0xE1C16E });
         const pallet = new THREE.Mesh(palletGeometry, palletMaterial);
-        pallet.position.set(0, -5, 0);  // Pallet is centered at -5 in Z-axis
+        pallet.position.set(0, 0, 0);
         scene.add(pallet);
+
+        // Grid helper
+        const gridHelper = new THREE.GridHelper(Math.max(palletDimensions.width, palletDimensions.height) * 100, 1);
+        gridHelper.position.y = 0;
+        scene.add(gridHelper);
 
         // Boxes
         coordinates.forEach(box => {
             const geometry = new THREE.BoxGeometry(box.width * 100, box.height * 100, box.length * 100);
-            const material = new THREE.MeshLambertMaterial({ color: 0xDAA06D }); // Light brown
+            const material = new THREE.MeshPhongMaterial({ color: 0xDAA06D });
             const cube = new THREE.Mesh(geometry, material);
             cube.position.set(
                 box.x * 100 - palletDimensions.width * 50, 
-                box.z * 100 , 
+                box.z * 100 +1/2, 
                 box.y * 100 - palletDimensions.height * 50
             );
             scene.add(cube);
 
-            const edges = new THREE.EdgesGeometry(geometry);  // Creating an edge geometry from the box geometry
-            const line = new THREE.LineSegments(edges, new THREE.LineBasicMaterial({ color: 0x000000 }));  // Using a basic line material for the edges
-            line.position.copy(cube.position);  // Position the edges at the same position as the cube
-            scene.add(line);  // Add the edges to the scene
+            const edges = new THREE.EdgesGeometry(geometry);
+            const line = new THREE.LineSegments(edges, new THREE.LineBasicMaterial({ color: 0x000000, linewidth: 2 }));
+            line.position.copy(cube.position);
+            scene.add(line);
         });
 
-        camera.position.z = 800;
-        camera.position.y = 200;
-        camera.lookAt(new THREE.Vector3(0, 0, 0));
-
+        // Animation loop
         const animate = () => {
             requestAnimationFrame(animate);
             controls.update();
@@ -72,9 +102,9 @@ const Visual = ({ coordinates, palletDimensions }) => {
                 mountRef.current.removeChild(renderer.domElement);
             }
         };
-    }, [coordinates, palletDimensions]);
+    }, [coordinates, palletDimensions, size]);
 
-    return <div ref={mountRef}></div>;
+    return <div ref={mountRef} style={{ width: '100%', height: '400px' }}></div>;
 };
 
 export default Visual;

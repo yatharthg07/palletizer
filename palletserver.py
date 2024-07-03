@@ -27,7 +27,7 @@ def receive_coordinates():
     coordinates = data['coordinates']
     
     # Filter coordinates for layer 1 and extract x, y, z
-    box_coords = [[coord['x'], coord['y'], coord['z']] for coord in coordinates if coord['layer'] == 1]
+    box_coords = [[coord['x'], coord['y'],0] for coord in coordinates if coord['layer'] == 1]
     
     # Get total layers
     num_layers = coordinates[0]['totalLayers']
@@ -221,7 +221,7 @@ def start_process():
                 pre_place = calculate_pre_point(box_abs)
 
                 rb.movel(pre_pickup)
-                time.sleep(3)
+                time.sleep(2)
                 rb.movel(pickup_point)
                 time.sleep(2)
                 rb.movel(pre_pickup)
@@ -239,7 +239,7 @@ def start_process():
                 time.sleep(2)
                 pre_pickup_rotated = apply_rotation(pre_pickup.copy(), -rotation_angle)
                 rb.movel(pre_pickup_rotated)
-                time.sleep(4)
+                time.sleep(3)
 
             # Adjust height for next layer
             pickup_point[2] += 0
