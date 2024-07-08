@@ -17,8 +17,8 @@ import {
 
 
 const UnitInformation = ({ nextStep }) => {
-  const inputBg = useColorModeValue('white', 'gray.200');
-  const inputBorder = useColorModeValue('gray.300', 'gray.600');
+  const inputBg = useColorModeValue('white', 'white');
+  const inputBorder = useColorModeValue('gray.300', 'gray.600');  
     const [unitData, setUnitData] = useState({
         width: '',
         length: '',
@@ -67,7 +67,7 @@ const UnitInformation = ({ nextStep }) => {
       display="flex"
       justifyContent="center"
       w="100%"
-      h="75vh"
+      h="78vh"
       overflow="hidden"
     >
       <Flex direction="row" w="80%" h="100%" overflow="hidden">
