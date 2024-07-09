@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ChakraProvider, Box, Flex, Image, Heading, VStack, useColorModeValue, extendTheme } from '@chakra-ui/react';
+import { ChakraProvider, Box, Flex, Image, Heading, VStack, useColorModeValue, extendTheme, ColorModeScript } from '@chakra-ui/react';
 import Navbar from './components/Navbar';
 import UnitInformation from './components/UnitInformation';
 import Results from './components/Results';
@@ -7,10 +7,13 @@ import DragAndDropPallet from './components/ManualPalletConfigurator';
 import Results2 from './components/Results2';
 import ModeToggle from './components/ModeToggle';
 
-const theme = extendTheme({
+const config = {
   initialColorMode: 'dark',
-  useSystemColorMode: false, 
-  
+  useSystemColorMode: false,
+};
+
+const theme = extendTheme({
+  config,
   styles: {
     global: {
       'body': {
@@ -66,6 +69,7 @@ const App = () => {
 
   return (
     <ChakraProvider theme={theme}>
+      <ColorModeScript initialColorMode={theme.config.initialColorMode} />
       <Box
         minH="100vh"
         backgroundImage={`url(${process.env.PUBLIC_URL}/backgroundImage_2.png)`}

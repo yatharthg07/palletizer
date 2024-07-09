@@ -9,7 +9,7 @@ from threading import Event
 
 app = Flask(__name__)
 CORS(app)
-socketio = SocketIO(app, cors_allowed_origins="*")
+socketio = SocketIO(app, async_mode='threading', cors_allowed_origins="*")
 box_coords_odd = []
 box_coords_even=[]
 pickup_point = None
@@ -266,6 +266,5 @@ def start_process():
     print("Number of Layers:", num_layers)
     return jsonify({'message': 'Process completed'})
     
-    
 if __name__ == '__main__':
-    socketio.run(app, debug=True)    
+    socketio.run(app, host='0.0.0.0', port=5000, debug=True, use_reloader=False)   

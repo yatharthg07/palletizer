@@ -78,7 +78,7 @@ const SavedConfigurations = ({ configurations, applyConfiguration, deleteConfigu
       <Modal isOpen={isOpen} onClose={onClose} size="xl">
         <ModalOverlay />
         <ModalContent>
-          <ModalHeader>Configuration Preview</ModalHeader>
+          <ModalHeader color='white'>Configuration Preview</ModalHeader>
           <ModalCloseButton />
           <ModalBody>
             {selectedImage && (
