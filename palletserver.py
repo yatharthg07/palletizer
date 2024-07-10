@@ -1,17 +1,25 @@
+import firebase_admin
+from firebase_admin import credentials
+from firebase_admin import db
 import socket
 import struct
 import time
 import math
-from flask import Flask, request, jsonify
-from flask_socketio import SocketIO, emit
-from flask_cors import CORS
 from threading import Event
 
-app = Flask(__name__)
-CORS(app)
-socketio = SocketIO(app, async_mode='threading', cors_allowed_origins="*")
+# Initialize Firebase
+cred = credentials.Certificate("key.json")
+firebase_admin.initialize_app(cred, {
+    'databaseURL': 'https://palletizer-322e0-default-rtdb.firebaseio.com/'
+})
+
+
+    
+# Get a reference to the database service
+ref = db.reference('palletizer')
+
 box_coords_odd = []
-box_coords_even=[]
+box_coords_even = []
 pickup_point = None
 transfer_point = None
 master_point = None
@@ -21,26 +29,33 @@ user_input_event = Event()
 
 DEFAULT_TIMEOUT = 10
 
-@app.route('/send-coordinates', methods=['POST'])
-def receive_coordinates():
-    global box_coords_odd,box_coords_even, num_layers
-    data = request.json
-    coordinates = data['coordinates']
+def clear_database():
+    ref.set({})
+    ref.child('messages').push().set({'type': 'info', 'content': 'Database cleared, waiting for coordinates...'})
     
-    # Filter coordinates for layer 1 and extract x, y, z
-    box_coords_odd = [[coord['x'], coord['y'],coord['rotate']*math.pi/2] for coord in coordinates if coord['layer'] == 1]
-    box_coords_even = [[coord['x'], coord['y'],coord['rotate']*math.pi/2] for coord in coordinates if coord['layer'] == 2]
-    
-    # Get total layers
-    num_layers = coordinates[0]['totalLayers']
-    print(box_coords_odd)
-    print(box_coords_even)
-    
-    return jsonify({'message': 'Coordinates received successfully'})
+def listen_for_coordinates():
+    def callback(event):
+        global box_coords_odd, box_coords_even, num_layers
+        coordinates = event.data
+        if coordinates:
+            box_coords_odd = [[coord['x'], coord['y'], coord['rotate']*math.pi/2] for coord in coordinates if coord['layer'] == 1]
+            box_coords_even = [[coord['x'], coord['y'], coord['rotate']*math.pi/2] for coord in coordinates if coord['layer'] == 2]
+            num_layers = coordinates[0]['totalLayers']
+            print(box_coords_odd)
+            print(box_coords_even)
+            ref.child('messages').push().set({'type': 'info', 'content': 'Coordinates received successfully'})
 
+    ref.child('coordinates').listen(callback)
 def wait_for_user_input():
     user_input_event.clear()
-    user_input_event.wait()
+    user_input_ref = ref.child('userInput')
+    while True:
+        user_input = user_input_ref.get()
+        if user_input == 'done':
+            user_input_ref.set('waiting')  # Reset the input to a non-None value
+            user_input_event.set()
+            break
+        time.sleep(0.5)
 
 conname = ['total_message_len', 'total_message_type', 'mode_sub_len', 'mode_sub_type', 'timestamp', 'reserver',
            'reserver', 'is_robot_power_on', 'is_emergency_stopped', 'is_robot_protective_stopped', 'is_program_running',
@@ -151,14 +166,13 @@ class RobotData():
         mes = f"def mov():\r\n    movel([{position[0]},{position[1]},{position[2]},{position[3]},{position[4]},{position[5]}],a=1,v=0.4,t=0,r=0)\r\nend\r\n"
         self.send_data(mes.encode())
 
-
 def get_tcp_pose(robot_ip):
     rb = RobotData()
     try:
         rb.connect(robot_ip)
     except Exception as e:
         print(f"Failed to connect to robot: {e}")
-        socketio.emit('error', {'message': f'Failed to connect to robot: {e}'})
+        ref.child('messages').push().set({'type': 'error', 'content': f'Failed to connect to robot: {e}'})
         exit(1)
 
     data = rb.get_data()
@@ -172,23 +186,19 @@ def get_tcp_pose(robot_ip):
     rb.disconnect()
     return tcp_position
 
-
 def get_master_point():
     global pickup_point, transfer_point, master_point, num_layers
     robot_ip = '192.168.1.200'
     
-    socketio.emit('prompt', {'message': 'Press done after reaching desired master location and switch robot to Remote mode'})
+    ref.child('messages').push().set({'type': 'prompt', 'content': 'Press done after reaching desired master location and switch robot to Remote mode'})
     wait_for_user_input()
     result = get_tcp_pose(robot_ip)
-    # result=robot_ip
-    socketio.emit('info', {'message': f'Master point: {result}'})
+    ref.child('messages').push().set({'type': 'info', 'content': f'Master point: {result}'})
     
-    
-    socketio.emit('prompt', {'message': 'Press done after reaching desired pickup location'})
+    ref.child('messages').push().set({'type': 'prompt', 'content': 'Press done after reaching desired pickup location'})
     wait_for_user_input()
     pickup = get_tcp_pose(robot_ip)
-    # pickup=robot_ip
-    socketio.emit('info', {'message': f'Pickup point: {pickup}'})
+    ref.child('messages').push().set({'type': 'info', 'content': f'Pickup point: {pickup}'})
     
     return pickup, result
 
@@ -202,13 +212,9 @@ def apply_rotation(position, angle_rad):
     return position
 
 
-@socketio.on('done')
-def handle_done():
-    user_input_event.set()
 
-@app.route('/start-process', methods=['POST'])
 def start_process():
-    global pickup_point, transfer_point, master_point, num_layers, box_coords_even,box_coords_odd
+    global pickup_point, transfer_point, master_point, num_layers, box_coords_even, box_coords_odd
     
     pickup_point, master_point = get_master_point()
 
@@ -253,18 +259,20 @@ def start_process():
             # Adjust height for next layer
             pickup_point[2] += 0
             master_point[2] += 0.1
-            
-        socketio.emit('info', {'message': 'Task completed successfully'})
+
+        ref.child('messages').push().set({'type': 'info', 'content': 'Task completed successfully'})
     except (socket.error, socket.timeout) as e:
         print(f"Socket error: {e}")
-        socketio.emit('error', {'message': f'Socket error: {e}'})
+        ref.child('messages').push().set({'type': 'error', 'content': f'Socket error: {e}'})
     finally:
         rb.disconnect()
+        clear_database()
 
     print("Pickup Point:", pickup_point)
     print("Master Point:", master_point)
     print("Number of Layers:", num_layers)
-    return jsonify({'message': 'Process completed'})
-    
+
 if __name__ == '__main__':
-    socketio.run(app, host='0.0.0.0', port=5000, debug=True, use_reloader=False)   
+    clear_database()
+    listen_for_coordinates()
+    ref.child('processStart').listen(lambda event: start_process() if event.data else None)
