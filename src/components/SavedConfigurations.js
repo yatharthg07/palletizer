@@ -37,6 +37,7 @@ const SavedConfigurations = ({ configurations, applyConfiguration, deleteConfigu
                 <Text color='white' fontSize="sm">Grid: {config.gridWidth}x{config.gridHeight}</Text>
                 <Text color='white' fontSize="sm">Box: {config.boxWidth}x{config.boxLength}x{config.boxHeight}</Text>
                 <Text color='white' fontSize="sm">Layers: {config.numLayers}</Text>
+                <Text color='white' fontSize="sm">Type: {config.palletType}</Text>
               </Box>
               {config.previewImage && (
                 <Box position="relative" cursor="pointer">
@@ -67,9 +68,8 @@ const SavedConfigurations = ({ configurations, applyConfiguration, deleteConfigu
               )}
             </Flex>
             <Flex mt={2} justifyContent="space-between">
-            <Button size="sm" colorScheme="red" onClick={() => deleteConfiguration(config)}>Delete</Button>
+              <Button size="sm" colorScheme="red" onClick={() => deleteConfiguration(config)}>Delete</Button>
               <Button size="sm" colorScheme='green' onClick={() => applyConfiguration(config)}>Apply</Button>
-              
             </Flex>
           </Box>
         ))}
