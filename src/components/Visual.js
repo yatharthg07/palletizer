@@ -64,9 +64,9 @@ const Visual = ({ coordinates, palletDimensions }) => {
         scene.add(pallet);
 
         // Grid helper
-        const gridHelper = new THREE.GridHelper(Math.max(palletDimensions.width, palletDimensions.height) * 100, 1);
-        gridHelper.position.y = 0;
-        scene.add(gridHelper);
+        // const gridHelper = new THREE.GridHelper(Math.max(palletDimensions.width, palletDimensions.height) * 100, 1);
+        // gridHelper.position.y = 0;
+        // scene.add(gridHelper);
 
         // Boxes
         coordinates.forEach(box => {
