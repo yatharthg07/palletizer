@@ -38,29 +38,27 @@ import {
 function ManualPalletConfigurator({ onSubmit }) {
   const [useTwoPallets, setUseTwoPallets] = useState(false);
   const [currentPallet, setCurrentPallet] = useState('left');
-  const [currentLayerType, setCurrentLayerType] = useState('odd');
+  const [currentLayer, setCurrentLayer] = useState('odd');
   const [pallets, setPallets] = useState({
     left: {
-      oddBoxes: [],
-      evenBoxes: [],
+      odd: { boxes: [], nextId: 0 },
+      even: { boxes: [], nextId: 0 },
       gridWidth: "5",
       gridHeight: "5",
       boxWidth: "1",
       boxLength: "1",
       boxHeight: "1",
-      numLayers: 1,
-      nextId: 0,
+      numLayers: 1
     },
     right: {
-      oddBoxes: [],
-      evenBoxes: [],
+      odd: { boxes: [], nextId: 0 },
+      even: { boxes: [], nextId: 0 },
       gridWidth: "5",
       gridHeight: "5",
       boxWidth: "1",
       boxLength: "1",
       boxHeight: "1",
-      numLayers: 1,
-      nextId: 0,
+      numLayers: 1
     }
   });
   const [scaleFactorWidth, setScaleFactorWidth] = useState(100);
@@ -90,6 +88,7 @@ function ManualPalletConfigurator({ onSubmit }) {
       const newConfig = {
         name: configName,
         pallets,
+        useTwoPallets,
         scaleFactorWidth,
         scaleFactorLength,
         displayHeight,
@@ -113,6 +112,7 @@ function ManualPalletConfigurator({ onSubmit }) {
 
   const applyConfiguration = (config) => {
     setPallets(config.pallets);
+    setUseTwoPallets(config.useTwoPallets);
     setScaleFactorLength(config.scaleFactorLength);
     setScaleFactorWidth(config.scaleFactorWidth);
     setDisplayWidth(config.displayWidth);
@@ -164,7 +164,7 @@ function ManualPalletConfigurator({ onSubmit }) {
   }, [currentConfig.gridWidth, currentConfig.gridHeight]);
 
   useEffect(() => {
-    const updateBoxes = (boxes) => boxes.map(box => {
+    const updatedBoxes = currentConfig[currentLayer].boxes.map(box => {
       if (box.rotate === 1 || box.rotate === 3) {
         return {
           ...box,
@@ -181,20 +181,18 @@ function ManualPalletConfigurator({ onSubmit }) {
         };
       }
     });
-
     setPallets(prev => ({
       ...prev,
       [currentPallet]: {
         ...currentConfig,
-        oddBoxes: updateBoxes(currentConfig.oddBoxes),
-        evenBoxes: updateBoxes(currentConfig.evenBoxes)
+        [currentLayer]: { ...currentConfig[currentLayer], boxes: updatedBoxes }
       }
     }));
   }, [currentConfig.boxWidth, currentConfig.boxHeight, currentConfig.boxLength]);
 
   const addBox = () => {
     const newBox = {
-      id: currentConfig.nextId,
+      id: currentConfig[currentLayer].nextId,
       x: 10,
       y: 10,
       width: Number(currentConfig.boxWidth),
@@ -202,15 +200,16 @@ function ManualPalletConfigurator({ onSubmit }) {
       height: Number(currentConfig.boxHeight),
       rotate: 0
     };
-    const updatedBoxes = currentLayerType === 'odd'
-      ? [...currentConfig.oddBoxes, newBox]
-      : [...currentConfig.evenBoxes, newBox];
+    const updatedBoxes = [...currentConfig[currentLayer].boxes, newBox];
     setPallets(prev => ({
       ...prev,
       [currentPallet]: {
         ...currentConfig,
-        [`${currentLayerType}Boxes`]: updatedBoxes,
-        nextId: currentConfig.nextId + 1
+        [currentLayer]: {
+          ...currentConfig[currentLayer],
+          boxes: updatedBoxes,
+          nextId: currentConfig[currentLayer].nextId + 1
+        }
       }
     }));
   };
@@ -225,8 +224,7 @@ function ManualPalletConfigurator({ onSubmit }) {
   };
 
   const moveBox = (id, x, y) => {
-    const boxes = currentLayerType === 'odd' ? currentConfig.oddBoxes : currentConfig.evenBoxes;
-    const movingBox = boxes.find(box => box.id === id);
+    const movingBox = currentConfig[currentLayer].boxes.find(box => box.id === id);
     const scaledWidth = movingBox.width * scaleFactorWidth;
     const scaledLength = movingBox.length * scaleFactorLength;
     let newX = Math.max(0, Math.min(Number(currentConfig.gridWidth) * scaleFactorWidth - scaledWidth, x));
@@ -236,7 +234,7 @@ function ManualPalletConfigurator({ onSubmit }) {
     let snapX = newX;
     let snapY = newY;
 
-    boxes.forEach(otherBox => {
+    currentConfig[currentLayer].boxes.forEach(otherBox => {
       if (otherBox.id !== id) {
         const otherX = otherBox.x;
         const otherY = otherBox.y;
@@ -258,7 +256,7 @@ function ManualPalletConfigurator({ onSubmit }) {
     });
 
     const testPosition = { ...movingBox, x: snapX, y: snapY, width: scaledWidth, length: scaledLength };
-    const overlapExists = boxes.some(otherBox =>
+    const overlapExists = currentConfig[currentLayer].boxes.some(otherBox =>
       otherBox.id !== id && boxesOverlap(testPosition, {
         ...otherBox,
         x: otherBox.x,
@@ -269,7 +267,7 @@ function ManualPalletConfigurator({ onSubmit }) {
     );
 
     if (!overlapExists) {
-      const updatedBoxes = boxes.map(box => {
+      const updatedBoxes = currentConfig[currentLayer].boxes.map(box => {
         if (box.id === id) {
           return { ...box, x: snapX, y: snapY };
         }
@@ -279,7 +277,7 @@ function ManualPalletConfigurator({ onSubmit }) {
         ...prev,
         [currentPallet]: {
           ...currentConfig,
-          [`${currentLayerType}Boxes`]: updatedBoxes
+          [currentLayer]: { ...currentConfig[currentLayer], boxes: updatedBoxes }
         }
       }));
     } else {
@@ -288,8 +286,7 @@ function ManualPalletConfigurator({ onSubmit }) {
   };
 
   const rotateBox = (id) => {
-    const boxes = currentLayerType === 'odd' ? currentConfig.oddBoxes : currentConfig.evenBoxes;
-    const updatedBoxes = boxes.map(box => {
+    const updatedBoxes = currentConfig[currentLayer].boxes.map(box => {
       if (box.id === id) {
         const newRotationState = (box.rotate + 1) % 4;
         return { ...box, width: box.length, length: box.width, rotate: newRotationState };
@@ -300,61 +297,60 @@ function ManualPalletConfigurator({ onSubmit }) {
       ...prev,
       [currentPallet]: {
         ...currentConfig,
-        [`${currentLayerType}Boxes`]: updatedBoxes
+        [currentLayer]: { ...currentConfig[currentLayer], boxes: updatedBoxes }
       }
     }));
   };
 
   const removeBox = id => {
-    const boxes = currentLayerType === 'odd' ? currentConfig.oddBoxes : currentConfig.evenBoxes;
-    const updatedBoxes = boxes.filter(box => box.id !== id);
+    const updatedBoxes = currentConfig[currentLayer].boxes.filter(box => box.id !== id);
     setPallets(prev => ({
       ...prev,
       [currentPallet]: {
         ...currentConfig,
-        [`${currentLayerType}Boxes`]: updatedBoxes
+        [currentLayer]: { ...currentConfig[currentLayer], boxes: updatedBoxes }
       }
     }));
   };
 
   const submitBoxes = () => {
     const allCoordinates = [];
-    const allPalletDimensions = [];
     Object.keys(pallets).forEach(palletKey => {
-      const config = pallets[palletKey];
-      const coordinates = [];
-      for (let layer = 1; layer <= config.numLayers; layer++) {
-        const boxes = layer % 2 === 1 ? config.oddBoxes : config.evenBoxes;
-        boxes.forEach(box => {
-          const z = box.height * (layer - 0.5);
-          const xCenter = ((box.x + (box.width * scaleFactorWidth / 2)) / scaleFactorWidth).toFixed(3);
-          const yCenter = ((box.y + (box.length * scaleFactorLength / 2)) / scaleFactorLength).toFixed(3);
-          coordinates.push({
-            id: box.id,
-            layer: layer,
-            layerType: layer % 2 === 1 ? 'odd' : 'even',
-            x: parseFloat(xCenter),
-            y: parseFloat(yCenter),
-            z: parseFloat(z),
-            width: box.width,
-            height: box.height,
-            length: box.length,
-            totalLayers: config.numLayers,
-            pallet: palletKey
+      if (useTwoPallets || palletKey === 'left') {
+        const config = pallets[palletKey];
+        const coordinates = [];
+        for (let layer = 1; layer <= config.numLayers; layer++) {
+          const layerKey = layer % 2 === 1 ? 'odd' : 'even';
+          config[layerKey].boxes.forEach(box => {
+            const z = box.height * (layer - 0.5);
+            const xCenter = ((box.x + (box.width * scaleFactorWidth / 2)) / scaleFactorWidth).toFixed(3);
+            const yCenter = ((box.y + (box.length * scaleFactorLength / 2)) / scaleFactorLength).toFixed(3);
+            coordinates.push({
+              id: box.id,
+              rotate: box.rotate,
+              layer: layer,
+              x: parseFloat(xCenter),
+              y: parseFloat(yCenter),
+              z: parseFloat(z),
+              width: box.width,
+              height: box.height,
+              length: box.length,
+              totalLayers: config.numLayers,
+              pallet: palletKey,
+              layerType: layerKey
+            });
           });
-        });
+        }
+        allCoordinates.push(...coordinates);
       }
-      allCoordinates.push(...coordinates);
-      allPalletDimensions.push({
-        pallet: palletKey,
-        width: parseFloat(config.gridWidth),
-        height: parseFloat(config.gridHeight)
-      });
     });
 
     onSubmit({
       coordinates: allCoordinates,
-      palletDimensions: allPalletDimensions
+      palletDimensions: {
+        left: { width: parseFloat(pallets.left.gridWidth), height: parseFloat(pallets.left.gridHeight) },
+        right: useTwoPallets ? { width: parseFloat(pallets.right.gridWidth), height: parseFloat(pallets.right.gridHeight) } : undefined
+      }
     });
   };
 
@@ -367,6 +363,28 @@ function ManualPalletConfigurator({ onSubmit }) {
         [setter]: value
       }
     }));
+  };
+
+  const copyOddToEven = () => {
+    const updatedEvenBoxes = currentConfig.odd.boxes.map(box => ({ ...box, id: currentConfig.even.nextId + box.id }));
+    setPallets(prev => ({
+      ...prev,
+      [currentPallet]: {
+        ...currentConfig,
+        even: {
+          ...currentConfig.even,
+          boxes: updatedEvenBoxes,
+          nextId: currentConfig.even.nextId + currentConfig.odd.boxes.length
+        }
+      }
+    }));
+    toast({
+      title: "Configuration copied",
+      description: "Odd layer configuration has been copied to even layers.",
+      status: "success",
+      duration: 3000,
+      isClosable: true,
+    });
   };
 
   const formBg = useColorModeValue('white', 'gray.100');
@@ -400,7 +418,7 @@ function ManualPalletConfigurator({ onSubmit }) {
                 <FormLabel htmlFor="two-pallets-switch" mb="0">
                   Use Two Pallets
                 </FormLabel>
-                <Switch id="two-pallets-switch" onChange={() => setUseTwoPallets(!useTwoPallets)} />
+                <Switch id="two-pallets-switch" isChecked={useTwoPallets} onChange={() => setUseTwoPallets(!useTwoPallets)} />
               </FormControl>
               {useTwoPallets && (
                 <FormControl display="flex" alignItems="center">
@@ -412,9 +430,14 @@ function ManualPalletConfigurator({ onSubmit }) {
               )}
               <FormControl display="flex" alignItems="center">
                 <FormLabel htmlFor="layer-switch" mb="0">
-                  Current Layer: {currentLayerType.charAt(0).toUpperCase() + currentLayerType.slice(1)}
+                  Current Layer: {currentLayer.charAt(0).toUpperCase() + currentLayer.slice(1)}
                 </FormLabel>
-                <Switch id="layer-switch" onChange={() => setCurrentLayerType(currentLayerType === 'odd' ? 'even' : 'odd')} />
+                <Switch id="layer-switch" onChange={() => setCurrentLayer(currentLayer === 'odd' ? 'even' : 'odd')} />
+                {currentLayer === 'even' && (
+                  <Button size="xs" ml={3} colorScheme="purple" onClick={copyOddToEven}>
+                    Copy Odd Config
+                  </Button>
+                )}
               </FormControl>
               <FormControl>
                 <FormLabel fontWeight="bold" color="gray.800">
@@ -517,7 +540,7 @@ function ManualPalletConfigurator({ onSubmit }) {
             >
               <Box ref={gridRef}>
                 <BoxGrid
-                  boxes={currentLayerType === 'odd' ? currentConfig.oddBoxes : currentConfig.evenBoxes}
+                  boxes={currentConfig[currentLayer].boxes}
                   gridWidth={displayWidth}
                   gridHeight={displayHeight}
                   moveBox={moveBox}

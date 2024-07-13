@@ -66,8 +66,6 @@ const Results2 = ({ coordinates, palletDimensions, prevStep }) => {
     setWaitingForInput(false);
   };
 
-  const singlePallet = palletDimensions.length === 1;
-
   return (
     <Flex h="80%" w="90%" bg="gray.200" p={5} rounded="lg" shadow="lg">
       <VStack w="60%" spacing={4} align="stretch">
@@ -79,25 +77,33 @@ const Results2 = ({ coordinates, palletDimensions, prevStep }) => {
         </Box>
         <Box bg="white" rounded="lg" shadow="md" p={6} flex="1" overflow="hidden">
           <Text fontSize="2xl" fontWeight="bold" color="blue.600" mb={4}>Visual Representation</Text>
-          <Flex direction={singlePallet ? "column" : "row"} justifyContent="space-between">
-            {palletDimensions.map((pallet, index) => (
-              <Box key={index} w={singlePallet ? "100%" : "48%"}>
-                <Visual palletDimensions={pallet} coordinates={coordinates.filter(coord => coord.pallet === pallet.pallet)} />
-              </Box>
-            ))}
+          <Flex>
+            <Visual palletDimensions={palletDimensions.left} coordinates={coordinates.filter(coord => coord.pallet === 'left')} />
+            {palletDimensions.right && (
+              <Visual palletDimensions={palletDimensions.right} coordinates={coordinates.filter(coord => coord.pallet === 'right')} />
+            )}
           </Flex>
         </Box>
         <HStack spacing={4}>
-          <Button onClick={prevStep} colorScheme="red">
+          <Button
+            onClick={prevStep}
+            colorScheme="red"
+          >
             Previous Step
           </Button>
           {!processStarted && (
-            <Button onClick={sendCoordinatesToRobot} colorScheme="blue">
+            <Button
+              onClick={sendCoordinatesToRobot}
+              colorScheme="blue"
+            >
               Send to Robot and Start Process
             </Button>
           )}
           {waitingForInput && (
-            <Button onClick={handleUserInput} colorScheme="green">
+            <Button
+              onClick={handleUserInput}
+              colorScheme="green"
+            >
               Confirm Step
             </Button>
           )}

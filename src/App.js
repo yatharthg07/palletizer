@@ -32,7 +32,7 @@ const App = () => {
   const [step, setStep] = useState(1);
   const [mode, setMode] = useState('manual');
   const [coordinates, setCoordinates] = useState([]);
-  const [palletDimensions, setPalletDimensions] = useState([]);
+  const [palletDimensions, setPalletDimensions] = useState({ left: { width: 0, height: 0 }, right: undefined });
 
   const bgOverlay = useColorModeValue('rgba(255, 255, 255, 0.8)', 'rgba(26, 32, 44, 0.8)');
   const headerBgColor = useColorModeValue('white', 'gray.800');
