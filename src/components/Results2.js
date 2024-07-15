@@ -61,6 +61,10 @@ const Results2 = ({ coordinates, palletDimensions, prevStep }) => {
     }
   };
 
+  const singlePallet = palletDimensions.right!==undefined ? false : true;
+  console.log(singlePallet);
+
+
   const handleUserInput = () => {
     socket.emit('done');
     setWaitingForInput(false);
@@ -77,12 +81,21 @@ const Results2 = ({ coordinates, palletDimensions, prevStep }) => {
         </Box>
         <Box bg="white" rounded="lg" shadow="md" p={6} flex="1" overflow="hidden">
           <Text fontSize="2xl" fontWeight="bold" color="blue.600" mb={4}>Visual Representation</Text>
-          <Flex>
-            <Visual palletDimensions={palletDimensions.left} coordinates={coordinates.filter(coord => coord.pallet === 'left')} />
-            {palletDimensions.right && (
-              <Visual palletDimensions={palletDimensions.right} coordinates={coordinates.filter(coord => coord.pallet === 'right')} />
-            )}
-          </Flex>
+          <Flex direction={singlePallet ? "column" : "row"} justifyContent="space-between">
+          <Box  w={singlePallet ? "100%" : "48%"}>
+          <Visual palletDimensions={palletDimensions.left} coordinates={coordinates.filter(coord => coord.pallet === 'left')} />
+          </Box>
+          <Box w={singlePallet ? "100%" : "48%"}>
+          <Visual palletDimensions={palletDimensions.right} coordinates={coordinates.filter(coord => coord.pallet === 'right')} />
+          </Box>  
+
+
+            {/* {palletDimensions.map((pallet, index) => (
+              <Box key={index} w={singlePallet ? "100%" : "48%"}>
+                <Visual palletDimensions={pallet} coordinates={coordinates.filter(coord => coord.pallet === pallet.pallet)} />
+              </Box>
+            ))} */}
+          </Flex>  
         </Box>
         <HStack spacing={4}>
           <Button
