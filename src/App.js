@@ -1,5 +1,18 @@
 import React, { useState } from 'react';
-import { ChakraProvider, Box, Flex, Image, Heading, VStack, useColorModeValue, extendTheme, ColorModeScript } from '@chakra-ui/react';
+import {
+  ChakraProvider,
+  Box,
+  Flex,
+  Image,
+  Heading,
+  HStack,
+  useColorModeValue,
+  extendTheme,
+  ColorModeScript,
+  IconButton,
+  useColorMode
+} from '@chakra-ui/react';
+import { MoonIcon, SunIcon } from '@chakra-ui/icons';
 import Navbar from './components/Navbar';
 import UnitInformation from './components/UnitInformation';
 import Results from './components/Results';
@@ -8,36 +21,22 @@ import Results2 from './components/Results2';
 import ModeToggle from './components/ModeToggle';
 
 const config = {
-  initialColorMode: 'dark',
+  initialColorMode: 'light',
   useSystemColorMode: false,
 };
 
-const theme = extendTheme({
-  config,
-  styles: {
-    global: {
-      'body': {
-        bg: 'gray.100',
-        color: 'black'
-      },
-      'input, textarea, select': {
-        bg: 'white',
-        color: 'black',
-      },
-    },
-  },
-});
+const theme = extendTheme({ config });
 
 const App = () => {
   const [step, setStep] = useState(1);
   const [mode, setMode] = useState('manual');
   const [coordinates, setCoordinates] = useState([]);
   const [palletDimensions, setPalletDimensions] = useState({ left: { width: 0, height: 0 }, right: undefined });
+  const { colorMode, toggleColorMode } = useColorMode();
 
-  const bgOverlay = useColorModeValue('rgba(255, 255, 255, 0.8)', 'rgba(26, 32, 44, 0.8)');
+  const bgColor = useColorModeValue('gray.50', 'gray.900');
   const headerBgColor = useColorModeValue('white', 'gray.800');
   const headerShadow = useColorModeValue('sm', 'md');
-  const contentBgColor = useColorModeValue('whiteAlpha.800', 'blackAlpha.600');
 
   const handleManualSubmit = (data) => {
     setCoordinates(data.coordinates);
@@ -70,45 +69,40 @@ const App = () => {
   return (
     <ChakraProvider theme={theme}>
       <ColorModeScript initialColorMode={theme.config.initialColorMode} />
-      <Box
-        minH="100vh"
-        backgroundImage={`url(${process.env.PUBLIC_URL}/backgroundImage_2.png)`}
-        backgroundSize="cover"
-        backgroundPosition="center"
-        backgroundAttachment="fixed"
-      >
-        <Box minH="100vh">
-          <Flex
-            as="header"
-            align="center"
-            justify="space-between"
-            wrap="wrap"
-            padding="1.2rem"
-            bg={headerBgColor}
-            color="gray.800"
-            boxShadow={headerShadow}
-          >
+      <Flex direction="column" minH="100vh" bg={bgColor}>
+        <Flex
+          as="header"
+          align="center"
+          justify="space-between"
+          wrap="wrap"
+          padding="1rem"
+          bg={headerBgColor}
+          color={useColorModeValue('gray.800', 'white')}
+          boxShadow={headerShadow}
+        >
+          <HStack spacing={4}>
             <Image src={`${process.env.PUBLIC_URL}/orangewoodLogo.png`} alt="Logo" h="8" />
             <Heading as="h1" size="lg" letterSpacing={'tight'}>
-              3D Pallet Calculator and Configurator
+              3D Pallet Calculator
             </Heading>
-          </Flex>
+          </HStack>
+          <HStack spacing={4}>
+            <ModeToggle mode={mode} toggleMode={toggleMode} />
+            <IconButton
+              icon={colorMode === 'light' ? <MoonIcon /> : <SunIcon />}
+              onClick={toggleColorMode}
+              variant="ghost"
+              aria-label="Toggle color mode"
+            />
+          </HStack>
+        </Flex>
 
-          <VStack spacing={2} align="stretch">
-            <Navbar step={step} />
-            <Flex justify="flex-end" w="full">
-              <ModeToggle mode={mode} toggleMode={toggleMode} />
-            </Flex>
-            <Box
-              flex="1"
-              display='flex'
-              justifyContent='center'
-            >
-              {renderStep()}
-            </Box>
-          </VStack>
+        <Navbar step={step} />
+        
+        <Box flex={1} overflow="hidden">
+          {renderStep()}
         </Box>
-      </Box>
+      </Flex>
     </ChakraProvider>
   );
 };
