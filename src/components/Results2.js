@@ -12,6 +12,7 @@ const Results2 = ({ coordinates, palletDimensions, prevStep }) => {
   const [messages, setMessages] = useState([{ type: 'prompt', content: "Trying to connect" }]);
   const [waitingForInput, setWaitingForInput] = useState(false);
   const [processStarted, setProcessStarted] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
   const toast = useToast();
   const { isOpen, onOpen, onClose } = useDisclosure();
 
@@ -61,9 +62,21 @@ const Results2 = ({ coordinates, palletDimensions, prevStep }) => {
     }
   };
 
-  const singlePallet = palletDimensions.right!==undefined ? false : true;
-  console.log(singlePallet);
+  const sendCommandToRobot = (command) => {
+    socket.emit(command);
+  };
 
+  const togglePauseResume = () => {
+    if (isPaused) {
+      sendCommandToRobot('resume');
+    } else {
+      sendCommandToRobot('pause');
+    }
+    setIsPaused(!isPaused);
+  };
+
+  const singlePallet = palletDimensions.right === undefined ? true : false;
+  console.log(singlePallet);
 
   const handleUserInput = () => {
     socket.emit('done');
@@ -82,20 +95,13 @@ const Results2 = ({ coordinates, palletDimensions, prevStep }) => {
         <Box bg="white" rounded="lg" shadow="md" p={6} flex="1" overflow="hidden">
           <Text fontSize="2xl" fontWeight="bold" color="blue.600" mb={4}>Visual Representation</Text>
           <Flex direction={singlePallet ? "column" : "row"} justifyContent="space-between">
-          <Box  w={singlePallet ? "100%" : "48%"}>
-          <Visual palletDimensions={palletDimensions.left} coordinates={coordinates.filter(coord => coord.pallet === 'left')} />
-          </Box>
-          <Box w={singlePallet ? "100%" : "48%"}>
-          <Visual palletDimensions={palletDimensions.right} coordinates={coordinates.filter(coord => coord.pallet === 'right')} />
-          </Box>  
-
-
-            {/* {palletDimensions.map((pallet, index) => (
-              <Box key={index} w={singlePallet ? "100%" : "48%"}>
-                <Visual palletDimensions={pallet} coordinates={coordinates.filter(coord => coord.pallet === pallet.pallet)} />
-              </Box>
-            ))} */}
-          </Flex>  
+            <Box w={singlePallet ? "100%" : "48%"}>
+              <Visual palletDimensions={palletDimensions.left} coordinates={coordinates.filter(coord => coord.pallet === 'left')} />
+            </Box>
+            <Box w={singlePallet ? "100%" : "48%"}>
+              {!singlePallet && <Visual palletDimensions={palletDimensions.right} coordinates={coordinates.filter(coord => coord.pallet === 'right')} />}
+            </Box>
+          </Flex>
         </Box>
         <HStack spacing={4}>
           <Button
@@ -123,9 +129,9 @@ const Results2 = ({ coordinates, palletDimensions, prevStep }) => {
         </HStack>
       </VStack>
       <Box w="40%" paddingLeft={4}>
-        <Box bg="white" rounded="lg" shadow="md" p={6} h="full" overflowY="auto">
+        <Box bg="white" rounded="lg" shadow="md" p={6} h="full" display="flex" flexDirection="column">
           <Text fontSize="2xl" fontWeight="bold" color="blue.600" mb={4}>Messages</Text>
-          <VStack spacing={4}>
+          <VStack spacing={4} flex="1" overflowY="auto">
             {messages.map((message, index) => (
               <Box
                 key={index}
@@ -149,6 +155,10 @@ const Results2 = ({ coordinates, palletDimensions, prevStep }) => {
               </Box>
             ))}
           </VStack>
+          <HStack spacing={4} mt={4} justify="center">
+            <Button onClick={togglePauseResume} colorScheme={isPaused ? "green" : "yellow"}>{isPaused ? "Resume" : "Pause"}</Button>
+            <Button onClick={() => sendCommandToRobot('stop')} colorScheme="red">Stop</Button>
+          </HStack>
         </Box>
       </Box>
 

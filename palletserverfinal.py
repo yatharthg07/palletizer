@@ -28,6 +28,8 @@ num_pallets = None
 layer_config = None
 
 user_input_event = Event()
+pause_event = Event()
+stop_event = Event()
 
 DEFAULT_TIMEOUT = 10
 
@@ -44,17 +46,14 @@ def receive_coordinates():
 
     for coord in coordinates:
         pallet = coord['pallet']
-        if coord['layerType'] == 'odd' and coord['layer']==1:
+        if coord['layerType'] == 'odd' and coord['layer'] == 1:
             pallet_data[pallet]['box_coords_odd'].append([coord['x'], coord['y'], coord['rotate'] * math.pi / 2])
-        elif coord['layerType'] == 'even' and coord['layer']==2:
+        elif coord['layerType'] == 'even' and coord['layer'] == 2:
             pallet_data[pallet]['box_coords_even'].append([coord['x'], coord['y'], coord['rotate'] * math.pi / 2])
     
     num_layers = coordinates[0]['totalLayers']
     num_pallets = 2 if pallet_data['right']['box_coords_odd'] or pallet_data['right']['box_coords_even'] else 1
-    num_layers=coordinates[0]['totalLayers']
     print(pallet_data)
-    
-    
     
     return jsonify({'message': 'Coordinates received successfully'})
 
@@ -63,6 +62,10 @@ def wait_for_user_input():
     user_input_event.clear()
     user_input_event.wait()
 
+def wait_for_pause():
+    while pause_event.is_set():
+        time.sleep(0.1)
+        
 conname = ['total_message_len', 'total_message_type', 'mode_sub_len', 'mode_sub_type', 'timestamp', 'reserver',
            'reserver', 'is_robot_power_on', 'is_emergency_stopped', 'is_robot_protective_stopped', 'is_program_running',
            'is_program_paused', 'get_robot_mode', 'get_robot_control_mode', 'get_target_speed_fraction',
@@ -127,8 +130,7 @@ conname = ['total_message_len', 'total_message_type', 'mode_sub_len', 'mode_sub_
            'current_elbow_position_y', 'current_elbow_position_z', 'elbow_radius', 'tool_comm_sub_len',
            'tool_comm_sub_type', 'is_enable',
            'baudrate', 'parity', 'stopbits', 'tci_modbus_status', 'tci_usage', 'reserved0', 'reserved1', ]
-confmt = 'IBIBQ???????BBdddB??IIBdddiiiffffBidddiiiffffBidddiiiffffBidddiiiffffBidddiiiffffBidddiiiffffBiIBddddddddddddIBdddddddddddddddddddddddddddddddddddddddddddddddddddddIIIIIBIIBBBdddBBBdddffffB???BIB????BIBBBddfBffBIBIbBddddIB?III?Bff'
-
+confmt = 'IBIBQ???????BBdddB??IIBdddiiiffffBidddiiiffffBidddiiiffffBidddiiiffffBidddiiiffffBidddiiiffffBiIBddddddddddddIBdddddddddddddddddddddddddddddddddddddddddddddddddddddIIIIIBIIBBBdddBBBdddffffB???BIB????BIBBBddfBffBIBIbBddddIB?III?Bff'        
 
 class RobotData():
     def __init__(self):
@@ -278,6 +280,21 @@ def apply_rotation(position, angle_rad):
 def handle_done():
     user_input_event.set()
 
+@socketio.on('pause')
+def handle_pause():
+    pause_event.set()
+    socketio.emit('info', {'message': 'Process paused'})
+
+@socketio.on('resume')
+def handle_resume():
+    pause_event.clear()
+    socketio.emit('info', {'message': 'Process resumed'})
+
+@socketio.on('stop')
+def handle_stop():
+    stop_event.set()
+    socketio.emit('info', {'message': 'Process stopped'})
+
 @app.route('/start-process', methods=['POST'])
 def start_process():
     global pickup_point, master_points, num_layers, pallet_data, num_pallets
@@ -301,10 +318,16 @@ def start_process():
         initial_pre_pickup_move_done = False
 
         for layer in range(num_layers):
+            wait_for_pause()
+            if stop_event.is_set():
+                break
             box_coords_pallet1 = box_coords_odd_pallet1 if layer_config == 1 or layer % 2 == 0 else box_coords_even_pallet1
             box_coords_pallet2 = box_coords_odd_pallet2 if layer_config == 1 or layer % 2 == 0 else box_coords_even_pallet2
 
             for i in range(max_boxes):
+                wait_for_pause()
+                if stop_event.is_set():
+                    break
                 if not initial_pre_pickup_move_done:
                     pre_pickup = calculate_pre_pickup_point(pickup_point)
                     rb.movel(pre_pickup)
@@ -335,6 +358,9 @@ def start_process():
                     rb.wait_for_motion_complete(pre_pickup)
 
                 if num_pallets == 2 and i < len(box_coords_pallet2):
+                    wait_for_pause()
+                    if stop_event.is_set():
+                        break
                     box = box_coords_pallet2[i]
                     box_abs = [master2_point[j] + box[j] for j in range(2)] + [master2_point[2]] + master2_point[3:]
                     rotation_angle = box[2]
@@ -375,4 +401,4 @@ def start_process():
     return jsonify({'message': 'Process completed successfully'})
 
 if __name__ == '__main__':
-    socketio.run(app, host='0.0.0.0', port=5000, debug=True, use_reloader=False)   
+    socketio.run(app, host='0.0.0.0', port=5000, debug=True, use_reloader=False)
