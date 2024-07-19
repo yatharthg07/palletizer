@@ -48,9 +48,9 @@ def receive_coordinates():
     for coord in coordinates:
         pallet = coord['pallet']
         if coord['layerType'] == 'odd' and coord['layer'] == 1:
-            pallet_data[pallet]['box_coords_odd'].append([coord['x'], coord['y'], coord['rotate'] * math.pi / 2])
+            pallet_data[pallet]['box_coords_odd'].append([coord['x'], -coord['y'], coord['rotate'] * math.pi / 2])
         elif coord['layerType'] == 'even' and coord['layer'] == 2:
-            pallet_data[pallet]['box_coords_even'].append([coord['x'], coord['y'], coord['rotate'] * math.pi / 2])
+            pallet_data[pallet]['box_coords_even'].append([coord['x'], -coord['y'], coord['rotate'] * math.pi / 2])
     
     num_layers = coordinates[0]['totalLayers']
     num_pallets = 2 if pallet_data['right']['box_coords_odd'] or pallet_data['right']['box_coords_even'] else 1
@@ -74,6 +74,9 @@ def wait_for_user_input():
 def wait_for_pause():
     while pause_event.is_set():
         time.sleep(0.1)
+    # Ensure pause_event is clear before resuming
+    pause_event.clear()
+
         
 conname = ['total_message_len', 'total_message_type', 'mode_sub_len', 'mode_sub_type', 'timestamp', 'reserver',
            'reserver', 'is_robot_power_on', 'is_emergency_stopped', 'is_robot_protective_stopped', 'is_program_running',
@@ -211,8 +214,12 @@ class RobotData():
         self.send_data(mes.encode())
 
     def wait_for_motion_complete(self, target_pose, timeout=10):
-        start_time = time.time()
-        while time.time() - start_time < timeout:
+
+        while 1:
+            wait_for_pause()
+            if stop_event.is_set():
+                exit()
+
             data = self.get_data()
             if data:
                 current_pose = [
@@ -221,12 +228,13 @@ class RobotData():
                 ]
                 if self.is_pose_reached(current_pose, target_pose):
                     return True
-            time.sleep(0.1)
+
         return False
 
     @staticmethod
     def is_pose_reached(current_pose, target_pose, threshold=0.0001):
         return all(abs(c - t) < threshold for c, t in zip(current_pose, target_pose))
+
 
 
 def get_tcp_pose(robot_ip):
@@ -275,18 +283,23 @@ def get_master_point():
 
 @app.route('/set-master-point/<pallet>', methods=['POST'])
 def set_master_point(pallet):
-    socketio.emit('prompt', {'message': f'Please move the robot to the desired master point position for Pallet {pallet.capitalize()} and confirm.'})
-    return jsonify({'message': 'Prompt sent to set master point'}), 200
+    try:
+        socketio.emit('prompt', {'message': f'Please move the robot to the desired master point position for Pallet {pallet.capitalize()} and confirm.'})
+        return jsonify({'message': 'Prompt sent to set master point'}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/confirm-master-point/<pallet>', methods=['POST'])
 def confirm_master_point(pallet):
-    print('haha')
-    global master_points
-    robot_ip = '192.168.1.200'
-    # master_points[pallet] = robot_ip
-    master_points[pallet] = get_tcp_pose(robot_ip)
-    socketio.emit('info', {'message': f'Master point for Pallet {pallet.capitalize()} set: {master_points[pallet]}'})
-    return jsonify({'masterPoint': master_points[pallet]}), 200
+    try:
+        global master_points
+        robot_ip = '192.168.1.200'
+        master_points[pallet] = get_tcp_pose(robot_ip)
+        socketio.emit('info', {'message': f'Master point for Pallet {pallet.capitalize()} set: {master_points[pallet]}'})
+        return jsonify({'masterPoint': master_points[pallet]}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 
 
 
@@ -326,11 +339,9 @@ def start_process():
     pickup_point, master_points, num_layers, num_pallets, layer_config = get_master_point()
 
     box_coords_odd_pallet1 = pallet_data['left']['box_coords_odd']
-
     box_coords_even_pallet1 = pallet_data['left']['box_coords_even']
-
-    box_coords_odd_pallet2 =   pallet_data['right']['box_coords_odd']   
-    box_coords_even_pallet2 =  pallet_data['right']['box_coords_even']  
+    box_coords_odd_pallet2 = pallet_data['right']['box_coords_odd']
+    box_coords_even_pallet2 = pallet_data['right']['box_coords_even']
     master1_point = master_points['left']
     master2_point = master_points['right']
     
@@ -343,16 +354,10 @@ def start_process():
         initial_pre_pickup_move_done = False
 
         for layer in range(int(num_layers)):
-            wait_for_pause()
-            if stop_event.is_set():
-                break
             box_coords_pallet1 = box_coords_odd_pallet1 if layer_config == 1 or layer % 2 == 0 else box_coords_even_pallet1
             box_coords_pallet2 = box_coords_odd_pallet2 if layer_config == 1 or layer % 2 == 0 else box_coords_even_pallet2
 
             for i in range(max_boxes):
-                wait_for_pause()
-                if stop_event.is_set():
-                    break
                 if not initial_pre_pickup_move_done:
                     pre_pickup = calculate_pre_pickup_point(pickup_point)
                     rb.movel(pre_pickup)
@@ -383,9 +388,7 @@ def start_process():
                     rb.wait_for_motion_complete(pre_pickup)
 
                 if num_pallets == 2 and i < len(box_coords_pallet2):
-                    wait_for_pause()
-                    if stop_event.is_set():
-                        break
+
                     box = box_coords_pallet2[i]
                     box_abs = [master2_point[j] + box[j] for j in range(2)] + [master2_point[2]] + master2_point[3:]
                     rotation_angle = box[2]
@@ -424,6 +427,7 @@ def start_process():
         print("Master Point 2:", master2_point)
     print("Number of Layers:", num_layers)
     return jsonify({'message': 'Process completed successfully'})
+
 
 if __name__ == '__main__':
     socketio.run(app, host='0.0.0.0', port=5000, debug=True, use_reloader=False)

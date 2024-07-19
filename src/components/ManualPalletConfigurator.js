@@ -412,6 +412,13 @@ function ManualPalletConfigurator({ onSubmit }) {
       }
     } catch (error) {
       console.error(`Failed to set master point for Pallet ${pallet}:`, error);
+      toast({
+        title: "Error",
+        description: `Failed to set master point for Pallet ${pallet}: ${error.response ? error.response.data.error : error.message}`,
+        status: "error",
+        duration: 5000,
+        isClosable: true,
+      });
     }
   };
   
@@ -437,8 +444,16 @@ function ManualPalletConfigurator({ onSubmit }) {
       }
     } catch (error) {
       console.error(`Failed to confirm master point for Pallet ${pallet}:`, error);
+      toast({
+        title: "Error",
+        description: `Failed to confirm master point for Pallet ${pallet}: ${error.response ? error.response.data.error : error.message}`,
+        status: "error",
+        duration: 5000,
+        isClosable: true,
+      });
     }
   };
+  
   
   
 
@@ -582,10 +597,11 @@ function ManualPalletConfigurator({ onSubmit }) {
                 <Button colorScheme="green" onClick={submitBoxes} flex="1" minW="130px">
                   Submit Boxes
                 </Button>
-              </Flex>
-              <Button mt={4} colorScheme="orange" onClick={onTeachRobotModalOpen} flex="1" minW="130px">
+                <Button colorScheme="orange" onClick={onTeachRobotModalOpen} flex="1" minW="130px">
                 Teach Robot
               </Button>
+              </Flex>
+
             </Stack>
             <Box
               flex="1"
