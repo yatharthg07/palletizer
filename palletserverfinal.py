@@ -260,7 +260,7 @@ def get_master_point():
     wait_for_user_input()
     pickup_point = get_tcp_pose(robot_ip)
     socketio.emit('info', {'message': f'Pickup point: {pickup_point}'})
-    layer_config = int(input("Enter layer configuration type (1 for same configuration every layer, 2 for odd/even configuration): "))
+    layer_config = 2
 
     return pickup_point, master_points, num_layers, num_pallets, layer_config
 
@@ -317,7 +317,7 @@ def start_process():
 
         initial_pre_pickup_move_done = False
 
-        for layer in range(num_layers):
+        for layer in range(int(num_layers)):
             wait_for_pause()
             if stop_event.is_set():
                 break
