@@ -6,6 +6,7 @@ import SavedConfigurations from './SavedConfigurations';
 import "./draganddrop.css"
 import { ChevronLeftIcon } from '@chakra-ui/icons';
 import html2canvas from 'html2canvas';
+import axios from 'axios';
 import {
   Box,
   Button,
@@ -61,6 +62,8 @@ function ManualPalletConfigurator({ onSubmit }) {
       numLayers: 1
     }
   });
+  const [masterPoints, setMasterPoints] = useState({ left: null, right: null });
+  const [masterPointButtons, setMasterPointButtons] = useState({ left: 'Set Master Point 1', right: 'Set Master Point 2' });
   const [scaleFactorWidth, setScaleFactorWidth] = useState(100);
   const [scaleFactorLength, setScaleFactorLength] = useState(100);
   const [displayWidth, setDisplayWidth] = useState(500);
@@ -69,6 +72,7 @@ function ManualPalletConfigurator({ onSubmit }) {
   const gridRef = useRef(null);
   const { isOpen: isModalOpen, onOpen: onModalOpen, onClose: onModalClose } = useDisclosure();
   const { isOpen: isDrawerOpen, onOpen: onDrawerOpen, onClose: onDrawerClose } = useDisclosure();
+  const { isOpen: isTeachRobotModalOpen, onOpen: onTeachRobotModalOpen, onClose: onTeachRobotModalClose } = useDisclosure();
   const [configName, setConfigName] = useState('');
   const toast = useToast();
 
@@ -93,7 +97,8 @@ function ManualPalletConfigurator({ onSubmit }) {
         scaleFactorLength,
         displayHeight,
         displayWidth,
-        previewImage
+        previewImage,
+        masterPoints
       };
       const updatedConfigurations = [...savedConfigurations, newConfig];
       setSavedConfigurations(updatedConfigurations);
@@ -117,6 +122,7 @@ function ManualPalletConfigurator({ onSubmit }) {
     setScaleFactorWidth(config.scaleFactorWidth);
     setDisplayWidth(config.displayWidth);
     setDisplayHeight(config.displayHeight);
+    setMasterPoints(config.masterPoints || { left: null, right: null });
     toast({
       title: "Configuration applied",
       description: `${config.name} has been applied successfully.`,
@@ -349,7 +355,8 @@ function ManualPalletConfigurator({ onSubmit }) {
       coordinates: allCoordinates,
       palletDimensions: {
         left: { width: parseFloat(pallets.left.gridWidth), height: parseFloat(pallets.left.gridHeight) },
-        right: useTwoPallets ? { width: parseFloat(pallets.right.gridWidth), height: parseFloat(pallets.right.gridHeight) } : undefined
+        right: useTwoPallets ? { width: parseFloat(pallets.right.gridWidth), height: parseFloat(pallets.right.gridHeight) } : undefined,
+        masterPoints: masterPoints
       }
     });
   };
@@ -386,6 +393,54 @@ function ManualPalletConfigurator({ onSubmit }) {
       isClosable: true,
     });
   };
+
+  const setMasterPoint = async (pallet) => {
+    try {
+      const response = await axios.post(`http://localhost:5000/set-master-point/${pallet}`);
+      if (response.status === 200) {
+        setMasterPointButtons(prev => ({
+          ...prev,
+          [pallet]: 'Confirm Position'
+        }));
+        toast({
+          title: "Move Robot",
+          description: "Please move the robot to the desired master point position.",
+          status: "info",
+          duration: 5000,
+          isClosable: true,
+        });
+      }
+    } catch (error) {
+      console.error(`Failed to set master point for Pallet ${pallet}:`, error);
+    }
+  };
+  
+  const confirmMasterPoint = async (pallet) => {
+    try {
+      const response = await axios.post(`http://localhost:5000/confirm-master-point/${pallet}`);
+      if (response.status === 200) {
+        setMasterPoints(prev => ({
+          ...prev,
+          [pallet]: response.data.masterPoint
+        }));
+        setMasterPointButtons(prev => ({
+          ...prev,
+          [pallet]: `Set Master Point`
+        }));
+        toast({
+          title: "Master Point Set",
+          description: `Master Point for Pallet ${pallet === 'left' ? 1 : 2} is set.`,
+          status: "success",
+          duration: 5000,
+          isClosable: true,
+        });
+      }
+    } catch (error) {
+      console.error(`Failed to confirm master point for Pallet ${pallet}:`, error);
+    }
+  };
+  
+  
 
   const formBg = useColorModeValue('white', 'gray.100');
   const inputBg = useColorModeValue('white', 'gray.50');
@@ -528,6 +583,9 @@ function ManualPalletConfigurator({ onSubmit }) {
                   Submit Boxes
                 </Button>
               </Flex>
+              <Button mt={4} colorScheme="orange" onClick={onTeachRobotModalOpen} flex="1" minW="130px">
+                Teach Robot
+              </Button>
             </Stack>
             <Box
               flex="1"
@@ -611,6 +669,52 @@ function ManualPalletConfigurator({ onSubmit }) {
             </DrawerContent>
           </DrawerOverlay>
         </Drawer>
+<Modal isOpen={isTeachRobotModalOpen} onClose={onTeachRobotModalClose}>
+  <ModalOverlay />
+  <ModalContent bg="gray.100">
+    <ModalHeader>Teach Robot</ModalHeader>
+    <ModalCloseButton />
+    <ModalBody>
+      <Text>Please move the robot to the desired master point position and then confirm.</Text>
+      <Button colorScheme="blue" onClick={() => {
+        if (masterPointButtons.left === 'Confirm Position') {
+          confirmMasterPoint('left');
+        } else {
+          setMasterPoint('left');
+        }
+      }} mt={4}>
+        {masterPointButtons.left}
+      </Button>
+      {useTwoPallets && (
+        <Button colorScheme="blue" onClick={() => {
+          if (masterPointButtons.right === 'Confirm Position') {
+            confirmMasterPoint('right');
+          } else {
+            setMasterPoint('right');
+          }
+        }} mt={4}>
+          {masterPointButtons.right}
+        </Button>
+      )}
+      {(
+        <Text mt={4}>
+          Master Point 1: {JSON.stringify(masterPoints.left)}
+        </Text>
+      )}
+      {useTwoPallets && (
+        <Text mt={4}>
+          Master Point 2: {JSON.stringify(masterPoints.right)}
+        </Text>
+      )}
+    </ModalBody>
+    <ModalFooter>
+      <Button variant="ghost" onClick={onTeachRobotModalClose}>
+        Close
+      </Button>
+    </ModalFooter>
+  </ModalContent>
+</Modal>
+
       </Box>
     </DndProvider>
   );

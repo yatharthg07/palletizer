@@ -49,10 +49,24 @@ const Results2 = ({ coordinates, palletDimensions, prevStep }) => {
 
   const sendCoordinatesToRobot = async () => {
     try {
-      const response = await axios.post('http://localhost:5000/send-coordinates', { coordinates });
+      const response = await axios.post('http://localhost:5000/send-coordinates', {
+        coordinates,
+        palletDimensions: {
+          left: {
+            width: palletDimensions.left.width,
+            height: palletDimensions.left.height,
+            masterPoint: palletDimensions.masterPoints.left,
+          },
+          right: !singlePallet ? {
+            width: palletDimensions.right.width,
+            height: palletDimensions.right.height,
+            masterPoint: palletDimensions.masterPoints.right,
+          } : undefined
+        }
+      });
       console.log('Server response:', response.data);
-      setMessages((prevMessages) => [...prevMessages, { type: 'success', content: 'Coordinates sent successfully!' }]);
-
+      setMessages((prevMessages) => [...prevMessages, { type: 'success', content: 'Coordinates and master points sent successfully!' }]);
+  
       const processResponse = await axios.post('http://localhost:5000/start-process');
       console.log('Process response:', processResponse.data);
       setProcessStarted(true);
@@ -61,6 +75,7 @@ const Results2 = ({ coordinates, palletDimensions, prevStep }) => {
       setMessages((prevMessages) => [...prevMessages, { type: 'error', content: 'Failed to send coordinates or start process.' }]);
     }
   };
+  
 
   const sendCommandToRobot = (command) => {
     socket.emit(command);

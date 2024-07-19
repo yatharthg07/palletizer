@@ -35,9 +35,10 @@ DEFAULT_TIMEOUT = 10
 
 @app.route('/send-coordinates', methods=['POST'])
 def receive_coordinates():
-    global pallet_data, num_layers, num_pallets
+    global pallet_data, num_layers, num_pallets, master_points
     data = request.json
     coordinates = data['coordinates']
+    pallet_dimensions = data['palletDimensions']
     
     # Clear previous data
     for pallet in pallet_data.keys():
@@ -53,9 +54,17 @@ def receive_coordinates():
     
     num_layers = coordinates[0]['totalLayers']
     num_pallets = 2 if pallet_data['right']['box_coords_odd'] or pallet_data['right']['box_coords_even'] else 1
-    print(pallet_data)
+
+    # Retrieve master points
+    master_points['left'] = pallet_dimensions['left']['masterPoint']
+    if 'right' in pallet_dimensions and pallet_dimensions['right']:
+        master_points['right'] = pallet_dimensions['right']['masterPoint']
     
-    return jsonify({'message': 'Coordinates received successfully'})
+    print(pallet_data)
+    print(f'Master Points: {master_points}')
+    
+    return jsonify({'message': 'Coordinates and master points received successfully'})
+
 
 
 def wait_for_user_input():
@@ -245,16 +254,16 @@ def get_master_point():
     global pickup_point, master_points, num_layers, num_pallets, layer_config
     robot_ip = '192.168.1.200'
     
-    socketio.emit('prompt', {'message': 'Press done after reaching desired master location for Pallet 1 and switch robot to Remote mode'})
-    wait_for_user_input()
-    master_points['left'] = get_tcp_pose(robot_ip)
-    socketio.emit('info', {'message': f'Master point for Pallet 1: {master_points["left"]}'})
+    # socketio.emit('prompt', {'message': 'Press done after reaching desired master location for Pallet 1 and switch robot to Remote mode'})
+    # wait_for_user_input()
+    # master_points['left'] = get_tcp_pose(robot_ip)
+    # socketio.emit('info', {'message': f'Master point for Pallet 1: {master_points["left"]}'})
 
-    if num_pallets == 2:
-        socketio.emit('prompt', {'message': 'Press done after reaching desired master location for Pallet 2 and switch robot to Remote mode'})
-        wait_for_user_input()
-        master_points['right'] = get_tcp_pose(robot_ip)
-        socketio.emit('info', {'message': f'Master point for Pallet 2: {master_points["right"]}'})
+    # if num_pallets == 2:
+    #     socketio.emit('prompt', {'message': 'Press done after reaching desired master location for Pallet 2 and switch robot to Remote mode'})
+    #     wait_for_user_input()
+    #     master_points['right'] = get_tcp_pose(robot_ip)
+    #     socketio.emit('info', {'message': f'Master point for Pallet 2: {master_points["right"]}'})
 
     socketio.emit('prompt', {'message': 'Press done after reaching desired pickup location'})
     wait_for_user_input()
@@ -263,6 +272,22 @@ def get_master_point():
     layer_config = 2
 
     return pickup_point, master_points, num_layers, num_pallets, layer_config
+
+@app.route('/set-master-point/<pallet>', methods=['POST'])
+def set_master_point(pallet):
+    socketio.emit('prompt', {'message': f'Please move the robot to the desired master point position for Pallet {pallet.capitalize()} and confirm.'})
+    return jsonify({'message': 'Prompt sent to set master point'}), 200
+
+@app.route('/confirm-master-point/<pallet>', methods=['POST'])
+def confirm_master_point(pallet):
+    print('haha')
+    global master_points
+    robot_ip = '192.168.1.200'
+    # master_points[pallet] = robot_ip
+    master_points[pallet] = get_tcp_pose(robot_ip)
+    socketio.emit('info', {'message': f'Master point for Pallet {pallet.capitalize()} set: {master_points[pallet]}'})
+    return jsonify({'masterPoint': master_points[pallet]}), 200
+
 
 
 def calculate_pre_pickup_point(point, z_offset=0.2):
