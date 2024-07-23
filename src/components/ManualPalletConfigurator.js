@@ -23,6 +23,7 @@ import {
   ModalOverlay,
   ModalContent,
   ModalHeader,
+  Select,
   ModalFooter,
   ModalBody,
   ModalCloseButton,
@@ -74,9 +75,94 @@ function ManualPalletConfigurator({ onSubmit }) {
   const { isOpen: isDrawerOpen, onOpen: onDrawerOpen, onClose: onDrawerClose } = useDisclosure();
   const { isOpen: isTeachRobotModalOpen, onOpen: onTeachRobotModalOpen, onClose: onTeachRobotModalClose } = useDisclosure();
   const [configName, setConfigName] = useState('');
+  const [units, setUnits] = useState('m');
+  const [displayValues, setDisplayValues] = useState({
+    left: {
+      boxWidth: '1',
+      boxLength: '1',
+      boxHeight: '1',
+      gridWidth: '5',
+      gridHeight: '5'
+    },
+    right: {
+      boxWidth: '1',
+      boxLength: '1',
+      boxHeight: '1',
+      gridWidth: '5',
+      gridHeight: '5'
+    }
+  });
   const toast = useToast();
 
   const currentConfig = pallets[currentPallet];
+
+  const convertToMeters = (value, fromUnit) => {
+    switch(fromUnit) {
+      case 'm': return value;
+      case 'mm': return value / 1000;
+      case 'in': return value * 0.0254;
+      default: return value;
+    }
+  };
+
+  const convertFromMeters = (value, toUnit) => {
+    switch(toUnit) {
+      case 'm': return value;
+      case 'mm': return value * 1000;
+      case 'in': return value / 0.0254;
+      default: return value;
+    }
+  };
+
+  const formatNumber = (num) => {
+    return parseFloat(num).toString();
+  };
+
+  // Modified handleDimensionChange
+  const handleDimensionChange = (setter) => (e) => {
+    let inputValue = e.target.value;
+    
+    // Remove leading zeros
+    inputValue = inputValue.replace(/^0+/, '');
+    
+    // If the input is empty or just a decimal point, set it to '0'
+    if (inputValue === '' || inputValue === '.') {
+      inputValue = '0';
+    }
+    
+    const numericValue = parseFloat(inputValue) || 0;
+    const metersValue = convertToMeters(numericValue, units);
+
+    setPallets(prev => ({
+      ...prev,
+      [currentPallet]: {
+        ...prev[currentPallet],
+        [setter]: metersValue.toString()
+      }
+    }));
+
+    setDisplayValues(prev => ({
+      ...prev,
+      [currentPallet]: {
+        ...prev[currentPallet],
+        [setter]: inputValue
+      }
+    }));
+  };
+
+  // Effect to update displayed values when units change
+  useEffect(() => {
+    setDisplayValues(prev => {
+      const updatedValues = {...prev };
+      ['left', 'right'].forEach(pallet => {
+        ['boxWidth', 'boxLength', 'boxHeight', 'gridWidth', 'gridHeight'].forEach(dimension => {
+          const metersValue = parseFloat(pallets[pallet][dimension]);
+          updatedValues[pallet][dimension] = formatNumber(convertFromMeters(metersValue, units));
+        });
+      });
+      return updatedValues;
+    });
+  }, [units, pallets]);
 
   useEffect(() => {
     const loadedConfigurations = localStorage.getItem('palletConfigurations');
@@ -361,16 +447,6 @@ function ManualPalletConfigurator({ onSubmit }) {
     });
   };
 
-  const handleDimensionChange = (setter) => (e) => {
-    const value = e.target.value.replace(/^0+/, '') || '';
-    setPallets(prev => ({
-      ...prev,
-      [currentPallet]: {
-        ...currentConfig,
-        [setter]: value
-      }
-    }));
-  };
 
   const copyOddToEven = () => {
     const updatedEvenBoxes = currentConfig.odd.boxes.map(box => ({ ...box, id: currentConfig.even.nextId + box.id }));
@@ -484,6 +560,14 @@ function ManualPalletConfigurator({ onSubmit }) {
               <Text color="gray.600">
                 Enter the width, length, height, and weight of each unit below.
               </Text>
+              <FormControl>
+                <FormLabel>Units</FormLabel>
+                <Select value={units} onChange={(e) => setUnits(e.target.value)}>
+                  <option value="m">Meters</option>
+                  <option value="mm">Millimeters</option>
+                  <option value="in">Inches</option>
+                </Select>
+              </FormControl>
               <FormControl display="flex" alignItems="center">
                 <FormLabel htmlFor="two-pallets-switch" mb="0">
                   Use Two Pallets
@@ -511,14 +595,14 @@ function ManualPalletConfigurator({ onSubmit }) {
               </FormControl>
               <FormControl>
                 <FormLabel fontWeight="bold" color="gray.800">
-                  Box Dimensions (in meters)
+                  Box Dimensions (in {units === 'm' ? 'meters' : units === 'mm' ? 'millimeters' : 'inches'})
                 </FormLabel>
                 <Flex gap={2} flexWrap="wrap">
                   <Box flex="1" minW="80px">
                     <FormLabel>Width</FormLabel>
                     <Input
                       type="number"
-                      value={currentConfig.boxWidth}
+                      value={displayValues[currentPallet].boxWidth}
                       onChange={handleDimensionChange('boxWidth')}
                       bg={inputBg}
                       borderColor={inputBorder}
@@ -528,7 +612,7 @@ function ManualPalletConfigurator({ onSubmit }) {
                     <FormLabel>Length</FormLabel>
                     <Input
                       type="number"
-                      value={currentConfig.boxLength}
+                      value={displayValues[currentPallet].boxLength}
                       onChange={handleDimensionChange('boxLength')}
                       bg={inputBg}
                       borderColor={inputBorder}
@@ -538,7 +622,7 @@ function ManualPalletConfigurator({ onSubmit }) {
                     <FormLabel>Height</FormLabel>
                     <Input
                       type="number"
-                      value={currentConfig.boxHeight}
+                      value={displayValues[currentPallet].boxHeight}
                       onChange={handleDimensionChange('boxHeight')}
                       bg={inputBg}
                       borderColor={inputBorder}
@@ -548,14 +632,14 @@ function ManualPalletConfigurator({ onSubmit }) {
               </FormControl>
               <FormControl>
                 <FormLabel fontWeight="bold" color="gray.800">
-                  Grid Dimensions (in meters)
+                  Grid Dimensions (in {units === 'm' ? 'meters' : units === 'mm' ? 'millimeters' : 'inches'})
                 </FormLabel>
                 <Flex gap={2} flexWrap="wrap">
                   <Box flex="1" minW="80px">
                     <FormLabel>Width</FormLabel>
                     <Input
                       type="number"
-                      value={currentConfig.gridWidth}
+                      value={displayValues[currentPallet].gridWidth}
                       onChange={handleDimensionChange('gridWidth')}
                       bg={inputBg}
                       borderColor={inputBorder}
@@ -565,7 +649,7 @@ function ManualPalletConfigurator({ onSubmit }) {
                     <FormLabel>Height</FormLabel>
                     <Input
                       type="number"
-                      value={currentConfig.gridHeight}
+                      value={displayValues[currentPallet].gridHeight}
                       onChange={handleDimensionChange('gridHeight')}
                       bg={inputBg}
                       borderColor={inputBorder}
