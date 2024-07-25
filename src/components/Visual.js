@@ -33,7 +33,8 @@ const Visual = ({ coordinates, palletDimensions }) => {
         // Setup camera
         const aspect = size.width / size.height;
         const camera = new THREE.PerspectiveCamera(50, aspect, 0.1, 2000);
-        camera.position.set(800, 400, 800);
+        const cameraDistance = Math.max(palletDimensions.width, palletDimensions.height) * 100 * 2;
+        camera.position.set(cameraDistance, cameraDistance / 2, cameraDistance);
         camera.lookAt(new THREE.Vector3(0, 0, 0));
 
         // Setup renderer
@@ -57,16 +58,18 @@ const Visual = ({ coordinates, palletDimensions }) => {
         scene.add(directionalLight);
 
         // Pallet
-        const palletGeometry = new THREE.BoxGeometry(palletDimensions.width * 100, 1 , palletDimensions.height * 100);
+        const palletDepth = Math.min(palletDimensions.width, palletDimensions.height) * 10;
+        const palletGeometry = new THREE.BoxGeometry(palletDimensions.width * 100, palletDepth, palletDimensions.height * 100);
         const palletMaterial = new THREE.MeshPhongMaterial({ color: 0xE1C16E });
         const pallet = new THREE.Mesh(palletGeometry, palletMaterial);
-        pallet.position.set(0, 0, 0);
+        pallet.position.set(0, palletDepth / 2, 0);
         scene.add(pallet);
 
-        // Grid helper
-        // const gridHelper = new THREE.GridHelper(Math.max(palletDimensions.width, palletDimensions.height) * 100, 1);
-        // gridHelper.position.y = 0;
-        // scene.add(gridHelper);
+        // Pallet lines
+        const palletEdges = new THREE.EdgesGeometry(palletGeometry);
+        const palletLines = new THREE.LineSegments(palletEdges, new THREE.LineBasicMaterial({ color: 0x000000, linewidth: 2 }));
+        palletLines.position.copy(pallet.position);
+        scene.add(palletLines);
 
         // Boxes
         coordinates.forEach(box => {
@@ -75,7 +78,7 @@ const Visual = ({ coordinates, palletDimensions }) => {
             const cube = new THREE.Mesh(geometry, material);
             cube.position.set(
                 box.x * 100 - palletDimensions.width * 50, 
-                box.z * 100 +1/2, 
+                box.z * 100 + palletDepth, 
                 box.y * 100 - palletDimensions.height * 50
             );
             scene.add(cube);

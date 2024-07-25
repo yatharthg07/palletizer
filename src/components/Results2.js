@@ -110,10 +110,12 @@ const Results2 = ({ coordinates, palletDimensions, prevStep }) => {
         <Box bg="white" rounded="lg" shadow="md" p={6} flex="1" overflow="hidden">
           <Text fontSize="2xl" fontWeight="bold" color="blue.600" mb={4}>Visual Representation</Text>
           <Flex direction={singlePallet ? "column" : "row"} justifyContent="space-between">
-            <Box w={singlePallet ? "100%" : "48%"}>
+            <Box w={singlePallet ? "100%" : "48%"}   >
+              <Text fontSize='xl' fontWeight='bold' align='center' >Pallet-1</Text>
               <Visual palletDimensions={palletDimensions.left} coordinates={coordinates.filter(coord => coord.pallet === 'left')} />
             </Box>
             <Box w={singlePallet ? "100%" : "48%"}>
+            {!singlePallet&&<Text fontSize='xl' fontWeight='bold' align='center' >Pallet-2</Text>}
               {!singlePallet && <Visual palletDimensions={palletDimensions.right} coordinates={coordinates.filter(coord => coord.pallet === 'right')} />}
             </Box>
           </Flex>
