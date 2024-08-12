@@ -3,7 +3,7 @@ import { ChakraProvider, Box, Flex, Image, Heading, VStack, useColorModeValue, e
 import Navbar from './components/Navbar';
 import UnitInformation from './components/UnitInformation';
 import Results from './components/Results';
-import DragAndDropPallet from './components/ManualPalletConfigurator';
+import ManualPalletConfigurator from './components/ManualPalletConfigurator';
 import Results2 from './components/Results2';
 import ModeToggle from './components/ModeToggle';
 
@@ -32,7 +32,7 @@ const App = () => {
   const [step, setStep] = useState(1);
   const [mode, setMode] = useState('manual');
   const [coordinates, setCoordinates] = useState([]);
-  const [palletDimensions, setPalletDimensions] = useState({ width: 0, height: 0 });
+  const [palletDimensions, setPalletDimensions] = useState({ left: { width: 0, height: 0 }, right: undefined });
 
   const bgOverlay = useColorModeValue('rgba(255, 255, 255, 0.8)', 'rgba(26, 32, 44, 0.8)');
   const headerBgColor = useColorModeValue('white', 'gray.800');
@@ -41,7 +41,7 @@ const App = () => {
 
   const handleManualSubmit = (data) => {
     setCoordinates(data.coordinates);
-    setPalletDimensions({ width: data.gridWidth, height: data.gridHeight });
+    setPalletDimensions(data.palletDimensions);
     setStep(4);
   };
 
@@ -63,7 +63,7 @@ const App = () => {
       if (step === 4) {
         return <Results2 coordinates={coordinates} palletDimensions={palletDimensions} prevStep={prevStep} />;
       }
-      return <DragAndDropPallet onSubmit={handleManualSubmit} />;
+      return <ManualPalletConfigurator onSubmit={handleManualSubmit} />;
     }
   };
 
@@ -77,7 +77,7 @@ const App = () => {
         backgroundPosition="center"
         backgroundAttachment="fixed"
       >
-        <Box  minH="100vh">
+        <Box minH="100vh">
           <Flex
             as="header"
             align="center"
@@ -94,9 +94,9 @@ const App = () => {
             </Heading>
           </Flex>
 
-          <VStack spacing={2} align="stretch" >
+          <VStack spacing={2} align="stretch">
             <Navbar step={step} />
-            <Flex justify="flex-end" w="full" >
+            <Flex justify="flex-end" w="full">
               <ModeToggle mode={mode} toggleMode={toggleMode} />
             </Flex>
             <Box

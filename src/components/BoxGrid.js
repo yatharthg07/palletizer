@@ -12,20 +12,26 @@ const BoxGrid = ({ boxes, moveBox, rotateBox, removeBox, gridWidth, gridHeight, 
   const scaleY = gridHeight / 492;  // Assuming original SVG height was 492
   
   //Validate gridWidth and gridHeight
-if (gridWidth <= 0 || gridHeight <= 0) {
-  return (
-    <div className="grid" style={{ width: `${gridWidth}px`, height: `${gridHeight}px` }}>
-      <p></p>
-    </div>
-  );
-}
+  if (gridWidth <= 0 || gridHeight <= 0) {
+    return (
+      <div className="grid" style={{ width: `${Math.max(1, gridWidth)}px`, height: `${Math.max(1, gridHeight)}px` }}>
+        <p></p>
+      </div>
+    );
+  }
 
   // Calculate dynamic dimensions and positions
-  const calculateSize = (size) => Math.round(size * Math.min(scaleX, scaleY));
-  const calculatePosition = (pos) => Math.round(pos * Math.min(scaleX, scaleY));
+  const calculateSize = (size) => Math.max(1, Math.round(size * Math.min(scaleX, scaleY)));
+  const calculatePosition = (pos) => Math.max(0, Math.round(pos * Math.min(scaleX, scaleY)));
 
   // Determine how many rectangles can fit vertically
-  const numberOfRectangles = Math.floor((gridHeight - calculatePosition(20)) / calculateSize(spaceBetween));
+  const calculatedSpaceBetween = calculateSize(spaceBetween);
+  const numberOfRectangles = calculatedSpaceBetween > 0 
+    ? Math.max(1, Math.min(
+        Math.floor((gridHeight - calculatePosition(20)) / calculatedSpaceBetween),
+        Math.floor(gridHeight / 10)  // Limit based on grid height
+      ))
+    : 1;
 
   // Generate positions for rectangles
   const yPosArray = Array.from({ length: numberOfRectangles }, (_, i) => 20 + i * spaceBetween);
@@ -63,4 +69,3 @@ if (gridWidth <= 0 || gridHeight <= 0) {
 };
 
 export default BoxGrid;
-

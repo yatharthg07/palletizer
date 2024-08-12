@@ -8,9 +8,11 @@ const socket = io('http://localhost:5000');
 
 const Results2 = ({ coordinates, palletDimensions, prevStep }) => {
   console.log(coordinates);
-  const [messages, setMessages] = useState([{type:'prompt',content:"Trying to connect"}]);
+  console.log(palletDimensions);
+  const [messages, setMessages] = useState([{ type: 'prompt', content: "Trying to connect" }]);
   const [waitingForInput, setWaitingForInput] = useState(false);
   const [processStarted, setProcessStarted] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
   const toast = useToast();
   const { isOpen, onOpen, onClose } = useDisclosure();
 
@@ -47,10 +49,24 @@ const Results2 = ({ coordinates, palletDimensions, prevStep }) => {
 
   const sendCoordinatesToRobot = async () => {
     try {
-      const response = await axios.post('http://localhost:5000/send-coordinates', { coordinates });
+      const response = await axios.post('http://localhost:5000/send-coordinates', {
+        coordinates,
+        palletDimensions: {
+          left: {
+            width: palletDimensions.left.width,
+            height: palletDimensions.left.height,
+            masterPoint: palletDimensions.masterPoints.left,
+          },
+          right: !singlePallet ? {
+            width: palletDimensions.right.width,
+            height: palletDimensions.right.height,
+            masterPoint: palletDimensions.masterPoints.right,
+          } : undefined
+        }
+      });
       console.log('Server response:', response.data);
-      setMessages((prevMessages) => [...prevMessages, { type: 'success', content: 'Coordinates sent successfully!' }]);
-      
+      setMessages((prevMessages) => [...prevMessages, { type: 'success', content: 'Coordinates and master points sent successfully!' }]);
+  
       const processResponse = await axios.post('http://localhost:5000/start-process');
       console.log('Process response:', processResponse.data);
       setProcessStarted(true);
@@ -59,6 +75,23 @@ const Results2 = ({ coordinates, palletDimensions, prevStep }) => {
       setMessages((prevMessages) => [...prevMessages, { type: 'error', content: 'Failed to send coordinates or start process.' }]);
     }
   };
+  
+
+  const sendCommandToRobot = (command) => {
+    socket.emit(command);
+  };
+
+  const togglePauseResume = () => {
+    if (isPaused) {
+      sendCommandToRobot('resume');
+    } else {
+      sendCommandToRobot('pause');
+    }
+    setIsPaused(!isPaused);
+  };
+
+  const singlePallet = palletDimensions.right === undefined ? true : false;
+  console.log(singlePallet);
 
   const handleUserInput = () => {
     socket.emit('done');
@@ -66,8 +99,7 @@ const Results2 = ({ coordinates, palletDimensions, prevStep }) => {
   };
 
   return (
-    <Flex h="80%" w="90%" bg="gray.200" p={5}           rounded="lg"
-    shadow="lg">
+    <Flex h="80%" w="90%" bg="gray.200" p={5} rounded="lg" shadow="lg">
       <VStack w="60%" spacing={4} align="stretch">
         <Box bg="white" rounded="lg" shadow="md" p={5}>
           <Text fontSize="2xl" fontWeight="bold" color="blue.600" mb={2}>Pallet Coordinates</Text>
@@ -75,10 +107,18 @@ const Results2 = ({ coordinates, palletDimensions, prevStep }) => {
             View Coordinates
           </Button>
         </Box>
-        <Box bg="white" rounded="lg" shadow="md" p={6} flex="1" overflow="hidden"> 
+        <Box bg="white" rounded="lg" shadow="md" p={6} flex="1" overflow="hidden">
           <Text fontSize="2xl" fontWeight="bold" color="blue.600" mb={4}>Visual Representation</Text>
-          
-          <Visual palletDimensions={palletDimensions} coordinates={coordinates} />
+          <Flex direction={singlePallet ? "column" : "row"} justifyContent="space-between">
+            <Box w={singlePallet ? "100%" : "48%"}   >
+              <Text fontSize='xl' fontWeight='bold' align='center' >Pallet-1</Text>
+              <Visual palletDimensions={palletDimensions.left} coordinates={coordinates.filter(coord => coord.pallet === 'left')} />
+            </Box>
+            <Box w={singlePallet ? "100%" : "48%"}>
+            {!singlePallet&&<Text fontSize='xl' fontWeight='bold' align='center' >Pallet-2</Text>}
+              {!singlePallet && <Visual palletDimensions={palletDimensions.right} coordinates={coordinates.filter(coord => coord.pallet === 'right')} />}
+            </Box>
+          </Flex>
         </Box>
         <HStack spacing={4}>
           <Button
@@ -106,32 +146,36 @@ const Results2 = ({ coordinates, palletDimensions, prevStep }) => {
         </HStack>
       </VStack>
       <Box w="40%" paddingLeft={4}>
-        <Box bg="white" rounded="lg" shadow="md" p={6} h="full" overflowY="auto">
+        <Box bg="white" rounded="lg" shadow="md" p={6} h="full" display="flex" flexDirection="column">
           <Text fontSize="2xl" fontWeight="bold" color="blue.600" mb={4}>Messages</Text>
-          <VStack spacing={4}>
+          <VStack spacing={4} flex="1" overflowY="auto">
             {messages.map((message, index) => (
-              <Box 
-                key={index} 
-                p={3} 
-                rounded="lg" 
+              <Box
+                key={index}
+                p={3}
+                rounded="lg"
                 w="full"
                 bg={
                   message.type === 'error' ? 'red.100' :
-                  message.type === 'success' ? 'green.100' :
-                  message.type === 'prompt' ? 'yellow.100' :
-                  'blue.100'
+                    message.type === 'success' ? 'green.100' :
+                      message.type === 'prompt' ? 'yellow.100' :
+                        'blue.100'
                 }
                 color={
                   message.type === 'error' ? 'red.800' :
-                  message.type === 'success' ? 'green.800' :
-                  message.type === 'prompt' ? 'yellow.800' :
-                  'blue.800'
+                    message.type === 'success' ? 'green.800' :
+                      message.type === 'prompt' ? 'yellow.800' :
+                        'blue.800'
                 }
               >
                 {message.content}
               </Box>
             ))}
           </VStack>
+          <HStack spacing={4} mt={4} justify="center">
+            <Button onClick={togglePauseResume} colorScheme={isPaused ? "green" : "yellow"}>{isPaused ? "Resume" : "Pause"}</Button>
+            <Button onClick={() => sendCommandToRobot('stop')} colorScheme="red">Stop</Button>
+          </HStack>
         </Box>
       </Box>
 
@@ -142,10 +186,11 @@ const Results2 = ({ coordinates, palletDimensions, prevStep }) => {
           <ModalCloseButton />
           <ModalBody>
             <VStack spacing={4}>
-              {coordinates.map((coord) => (
-                <Box key={coord.id} bg="gray.50" p={4} rounded="md" w="full">
-                  <Text fontWeight="semibold">Box {coord.id} - Layer: {coord.layer}</Text>
+              {coordinates.map((coord, index) => (
+                <Box key={index} bg="gray.50" p={4} rounded="md" w="full">
+                  <Text fontWeight="semibold">Box {coord.id} - Layer: {coord.layer} - {coord.layerType}</Text>
                   <Text>Position: ({coord.x}, {coord.y}, {coord.z})</Text>
+                  <Text>Pallet: {coord.pallet}</Text>
                 </Box>
               ))}
             </VStack>
